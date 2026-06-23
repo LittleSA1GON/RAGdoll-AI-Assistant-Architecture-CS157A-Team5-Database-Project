@@ -1,0 +1,41 @@
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f3f4f6;
+    color: #1f2937;
+}
+
+.app-shell {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 40px 24px;
+}
+
+header h1 {
+    margin: 0 0 10px;
+    font-size: 2.4rem;
+}
+
+header p {
+    margin: 0 0 24px;
+    color: #4b5563;
+}
+
+.actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.button {
+    display: inline-block;
+    padding: 12px 22px;
+    text-decoration: none;
+    color: white;
+    background: #2563eb;
+    border-radius: 6px;
+}
+
+.button:hover {
+    background: #1d4ed8;
+}
