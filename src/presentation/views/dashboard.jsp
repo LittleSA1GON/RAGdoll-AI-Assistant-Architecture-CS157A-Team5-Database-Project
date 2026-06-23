@@ -21,7 +21,7 @@
                 <%
                     String db = "ragdoll";
                     String user = "root";
-                    String password = "1234";
+                    String password = System.getenv("DB_PASSWORD");
 
                     try {
                         Class.forName("com.mysql.cj.jdbc.Driver");

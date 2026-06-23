@@ -20,7 +20,7 @@ public class HomeServlet extends HttpServlet {
     private static final String DB_USER = "root";
 
     // Change this to your real MySQL password
-    private static final String DB_PASSWORD = "YOUR_MYSQL_PASSWORD";
+    private static final String DB_PASSWORD = System.getenv("DB_PASSWORD");
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
