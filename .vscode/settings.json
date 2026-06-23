@@ -1,0 +1,6 @@
+{
+    "java.project.referencedLibraries": [
+        "src/presentation/WEB-INF/lib/mysql-connector-j-9.7.0.jar",
+        "src/presentation/WEB-INF/lib/servlet-api.jar"
+    ]
+}
