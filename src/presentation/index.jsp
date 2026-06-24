@@ -1,28 +1,26 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>RAGdoll AI Assistant - Home</title>
+    <title>RAGdoll AI - Home</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
-<body>
-    <div class="app-shell">
-        <header>
+<body class="landing-body">
+    <nav class="landing-nav">
+        <div class="logo">RAGdoll</div>
+        <a href="views/login.jsp" class="nav-login">Log in</a>
+    </nav>
+    
+    <main class="hero-section">
+        <div class="hero-content">
             <h1>RAGdoll AI Assistant</h1>
-            <p>A minimal runnable 3-tier architecture homepage.</p>
-        </header>
-
-        <main>
-            <section>
-                <h2>Start here</h2>
-                <p>This page is served through a servlet controller and forwarded to the presentation tier.</p>
-                <div class="actions">
-                    <a class="button" href="views/login.jsp">Login</a>
-                    <a class="button" href="views/dashboard.jsp">Dashboard</a>
-                </div>
-            </section>
-        </main>
-    </div>
+            <p>A minimal, clean, and runnable 3-tier architecture homepage.</p>
+            
+            <div class="hero-actions">
+                <a href="views/dashboard.jsp" class="btn-primary">Go to Dashboard</a>
+            </div>
+        </div>
+    </main>
 </body>
 </html>

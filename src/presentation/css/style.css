@@ -1,41 +1,137 @@
-body {
+/* variables */
+:root {
+    --bg-main: #ffffff;
+    --bg-sidebar: #fcfcfc;
+    --text-primary: #1f2937;
+    --text-secondary: #6b7280;
+    --text-placeholder: #9ca3af;
+    --border-color: #e5e7eb;
+    --hover-color: #f3f4f6;
+}
+
+/* basic common styling */
+*, *::before, *::after { 
+    box-sizing: border-box;
     margin: 0;
-    font-family: Arial, sans-serif;
-    background: #f3f4f6;
-    color: #1f2937;
+    padding: 0;
 }
 
-.app-shell {
-    max-width: 900px;
-    margin: 0 auto;
-    padding: 40px 24px;
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg-main);
+    color: var(--text-primary);
+    height: 100vh;
+    overflow: hidden;
 }
 
-header h1 {
-    margin: 0 0 10px;
-    font-size: 2.4rem;
+a { text-decoration: none; color: inherit; }
+button, input, select { font-family: inherit; color: inherit; outline: none; }
+
+/* shared big components between pages */
+.app-shell { display: flex; height: 100vh; width: 100vw; }
+.landing-body { display: flex; flex-direction: column; min-height: 100vh; overflow-y: auto; }
+.auth-body, .hero-section { display: grid; place-items: center; height: 100vh; }
+.auth-body { background-color: var(--bg-sidebar); }
+
+/* shared small components between pages */
+.btn-primary, .btn-secondary, .upgrade-btn, .auth-submit-btn, .nav-login, .new-chat-btn {
+    display: inline-flex; justify-content: center; align-items: center;
+    border-radius: 8px; font-size: 15px; font-weight: 500; cursor: pointer;
+    transition: all 0.2s ease; border: 1px solid transparent; background: transparent;
 }
 
-header p {
-    margin: 0 0 24px;
-    color: #4b5563;
-}
+/* solid buttons */
+.btn-primary, .auth-submit-btn { background: var(--text-primary); color: #fff; padding: 12px 24px; }
+.btn-primary:hover, .auth-submit-btn:hover { opacity: 0.9; }
+.auth-submit-btn { width: 100%; margin-top: 12px; border-radius: 6px; }
 
-.actions {
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-}
+/* outlined buttons */
+.btn-secondary, .upgrade-btn { border-color: var(--border-color); }
+.btn-secondary:hover, .upgrade-btn:hover { background: var(--hover-color); border-color: #d1d5db; }
+.btn-secondary { padding: 12px 24px; }
+.upgrade-btn { padding: 6px 14px; border-radius: 20px; font-size: 13px; }
 
-.button {
-    display: inline-block;
-    padding: 12px 22px;
-    text-decoration: none;
-    color: white;
-    background: #2563eb;
-    border-radius: 6px;
+/* inputs/dropdown */
+.auth-form input, .model-selector select {
+    width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 6px;
+    font-size: 15px; background-color: var(--bg-main); transition: border-color 0.2s;
 }
+.auth-form input::placeholder, .input-box input::placeholder { color: var(--text-placeholder); }
+.auth-form input:focus { border-color: #9ca3af; }
 
-.button:hover {
-    background: #1d4ed8;
+/* text css */
+.site-title, .landing-nav .logo, .auth-header h2 { font-weight: 700; letter-spacing: -0.5px; }
+
+/* dashboard specific css */
+.sidebar { width: 260px; background: var(--bg-sidebar); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; justify-content: space-between; }
+.sidebar-top, .sidebar-bottom { padding: 16px; }
+.sidebar-bottom { border-top: 1px solid var(--border-color); }
+.site-title { font-size: 18px; margin-bottom: 24px; padding: 0 8px; }
+
+.new-chat-btn { width: 100%; padding: 10px 8px; justify-content: flex-start; font-size: 14px; border-radius: 6px; }
+.new-chat-btn:hover { background: var(--hover-color); }
+.new-chat-btn .left-icon { margin-right: 12px; color: var(--text-secondary); font-size: 16px; }
+.new-chat-btn .right-icon { margin-left: auto; color: var(--text-secondary); }
+
+.past-chats { margin-top: 32px; }
+.past-chats h3 { font-size: 12px; font-weight: 600; margin-bottom: 12px; padding: 0 8px; }
+.chat-item { padding: 10px 8px; border-radius: 6px; font-size: 14px; cursor: pointer; display: flex; align-items: center; }
+.chat-item.active { background: #f1f1f1; }
+.gray-circle { width: 10px; height: 10px; background-color: #d1d5db; border-radius: 50%; margin-right: 12px; }
+
+.user-profile { display: flex; align-items: center; gap: 12px; }
+.avatar { width: 30px; height: 30px; border-radius: 50%; background: #5ed06f; color: white; display: grid; place-items: center; font-size: 12px; font-weight: 600; }
+.user-info { display: flex; flex-direction: column; }
+.user-name { font-size: 13px; font-weight: 500; }
+.user-tier { font-size: 12px; color: var(--text-secondary); }
+
+.main-area { flex: 1; display: flex; flex-direction: column; position: relative; }
+.top-nav { display: flex; justify-content: space-between; align-items: center; padding: 16px 24px; height: 60px; }
+
+.model-selector select {
+    padding: 8px 36px 8px 16px; font-weight: 600; cursor: pointer; appearance: none;
 }
+.model-selector::after {
+    content: "";
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    width: 8px;
+    height: 8px;
+    border-right: 2px solid #6b7280;
+    border-bottom: 2px solid #6b7280;
+    transform: translateY(-65%) rotate(45deg);
+    pointer-events: none;
+}
+.model-selector select:hover { background-color: var(--hover-color); border-color: #d1d5db; }
+
+.chat-container { flex: 1; overflow-y: auto; }
+.input-container { padding: 24px; display: flex; justify-content: center; width: 100%; background: linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,1) 30%); }
+.input-box { display: flex; align-items: center; width: 100%; max-width: 760px; background: white; border: 1px solid var(--border-color); border-radius: 30px; padding: 12px 20px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03); }
+.plus-btn { font-size: 22px; color: var(--text-secondary); cursor: pointer; margin-right: 16px; font-weight: 300; }
+.input-box input { flex: 1; border: none; background: transparent; }
+
+/* login/(auth i guess) specific css */
+.auth-wrapper { width: 100%; max-width: 420px; padding: 24px; }
+.auth-card { background: var(--bg-main); padding: 40px; border-radius: 12px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04); border: 1px solid var(--border-color); }
+.auth-header { text-align: center; margin-bottom: 32px; }
+.auth-header h2 { font-size: 24px; margin-bottom: 8px; }
+.auth-header p, .auth-footer { font-size: 14px; color: var(--text-secondary); }
+.auth-form .form-group { margin-bottom: 20px; }
+.auth-form label { display: block; font-size: 14px; font-weight: 500; margin-bottom: 8px; }
+.auth-footer { margin-top: 24px; text-align: center; }
+.auth-footer a { font-weight: 500; }
+.auth-footer a:hover { text-decoration: underline; }
+.back-link { display: inline-block; margin-top: 16px; font-size: 13px; font-weight: 400; color: var(--text-secondary); }
+
+/* landing specific css */
+.landing-nav { display: flex; justify-content: space-between; align-items: center; padding: 24px 48px; }
+.landing-nav .logo { font-size: 20px; }
+.nav-login { font-weight: 500; font-size: 15px; padding: 8px 16px; border-radius: 6px; }
+.nav-login:hover { background-color: var(--hover-color); }
+.hero-section { padding: 24px; text-align: center; height: auto; flex: 1; }
+.hero-content { max-width: 600px; }
+.badge { display: inline-block; padding: 4px 12px; background-color: var(--hover-color); color: var(--text-secondary); border-radius: 20px; font-size: 12px; font-weight: 600; margin-bottom: 24px; border: 1px solid var(--border-color); }
+.hero-content h1 { font-size: 48px; font-weight: 800; margin-bottom: 16px; letter-spacing: -1px; line-height: 1.1; }
+.hero-content p { font-size: 18px; color: var(--text-secondary); margin-bottom: 36px; line-height: 1.5; }
+.hero-actions { display: flex; gap: 16px; justify-content: center; }

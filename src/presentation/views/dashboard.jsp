@@ -9,60 +9,83 @@
 </head>
 <body>
     <div class="app-shell">
-        <header>
-            <h1>Dashboard</h1>
-            <p>Simple SQL table loaded from the RAGdoll database.</p>
-        </header>
+        <aside class="sidebar">
+            <div class="sidebar-top">
+                <h2 class="site-title">RAGdoll</h2>
+                
+                <button class="new-chat-btn">
+                    <span class="left-icon">○</span> New chat
+                    <span class="right-icon">+</span>
+                </button>
+                
+                <div class="past-chats">
+                    <h3>Past Chats</h3>
+                    <div class="chat-item active">
+                        <span class="gray-circle"></span> Default Chat
+                    </div>
+                </div>
+            </div>
+            
+            <div class="sidebar-bottom">
+                <div class="user-profile">
+                    <div class="avatar">JR</div>
+                    <div class="user-info">
+                        <div class="user-name">John Roblox</div>
+                        <div class="user-tier">Free</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+        
+        <main class="main-area">
+            <header class="top-nav">
+                <div class="model-selector">
+                    <select id="ai-model" name="ai-model">
+                        <%
+                            String db = "ragdoll";
+                            String user = "root";
+                            String password = System.getenv("DB_PASSWORD");
 
-        <main>
-            <section>
-                <h2>Available AI Models</h2>
+                            try {
+                                Class.forName("com.mysql.cj.jdbc.Driver");
+                                Connection con = DriverManager.getConnection(
+                                    "jdbc:mysql://localhost:3306/ragdoll?autoReconnect=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC",
+                                    user,
+                                    password
+                                );
 
-                <%
-                    String db = "ragdoll";
-                    String user = "root";
-                    String password = System.getenv("DB_PASSWORD");
+                                Statement stmt = con.createStatement();
+                                ResultSet rs = stmt.executeQuery("SELECT model_id, model_name, access_level FROM models");
 
-                    try {
-                        Class.forName("com.mysql.cj.jdbc.Driver");
+                                while (rs.next()) {
+                                    String modelName = rs.getString("model_name");
+                                    String access_level = rs.getString("access_level");
+                                    out.println("<option value=\"" + rs.getInt("model_id") + "\">" + modelName + " - " + access_level + "</option>");
+                                }
 
-                        Connection con = DriverManager.getConnection(
-                            "jdbc:mysql://localhost:3306/ragdoll?autoReconnect=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC",
-                            user,
-                            password
-                        );
+                                rs.close();
+                                stmt.close();
+                                con.close();
+                            } catch (SQLException e) {
+                                out.println("<option value=\"error\">SQL Error</option>");
+                            } catch (ClassNotFoundException e) {
+                                out.println("<option value=\"error\">Driver Error</option>");
+                            }
+                        %>
+                    </select>
+                </div>
+                <button class="upgrade-btn">Upgrade</button>
+            </header>
 
-                        out.println("<p class=\"status success\">" + db + " database successfully opened.</p>");
-                        out.println("<p>Initial entries in table <strong>models</strong>:</p>");
+            <div class="chat-container">
+                </div>
 
-                        out.println("<table class=\"data-table\">");
-                        out.println("<tr><th>Model ID</th><th>Model Name</th><th>Access Level</th></tr>");
-
-                        Statement stmt = con.createStatement();
-                        ResultSet rs = stmt.executeQuery("SELECT model_id, model_name, access_level FROM models");
-
-                        while (rs.next()) {
-                            out.println("<tr>"
-                                + "<td>" + rs.getInt("model_id") + "</td>"
-                                + "<td>" + rs.getString("model_name") + "</td>"
-                                + "<td>" + rs.getString("access_level") + "</td>"
-                                + "</tr>");
-                        }
-
-                        out.println("</table>");
-
-                        rs.close();
-                        stmt.close();
-                        con.close();
-                    } catch (SQLException e) {
-                        out.println("<p class=\"status error\">SQLException caught: " + e.getMessage() + "</p>");
-                    } catch (ClassNotFoundException e) {
-                        out.println("<p class=\"status error\">MySQL JDBC Driver not found: " + e.getMessage() + "</p>");
-                    }
-                %>
-            </section>
-
-            <p><a class="button" href="../index.jsp">Back to Home</a></p>
+            <div class="input-container">
+                <div class="input-box">
+                    <span class="plus-btn">+</span>
+                    <input type="text" placeholder="Type here" />
+                </div>
+            </div>
         </main>
     </div>
 </body>
