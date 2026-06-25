@@ -15,7 +15,7 @@
     <main class="hero-section">
         <div class="hero-content">
             <h1>RAGdoll AI Assistant</h1>
-            <p>A minimal, clean, and runnable 3-tier architecture homepage.</p>
+            <p>A minimal, clean, and scalable RAG based AI hosting framework.</p>
             
             <div class="hero-actions">
                 <a href="views/dashboard.jsp" class="btn-primary">Go to Dashboard</a>
