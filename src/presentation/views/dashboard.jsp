@@ -77,8 +77,27 @@
                 <button class="upgrade-btn">Upgrade</button>
             </header>
 
-            <div class="chat-container">
+            <div class="chat-container empty-state">
+                <div style="max-width: 500px;">
+                    <div style="font-size: 56px; margin-bottom: 16px;">✨</div>
+                    <h2 style="font-size: 28px; font-weight: 700; margin-bottom: 12px; color: #1f2937;">Welcome to RAGdoll AI</h2>
+                    <p style="font-size: 16px; color: #6b7280; margin-bottom: 32px; line-height: 1.6;">
+                        Explore powerful AI conversations. Start by typing your question below or select a model from the dropdown.
+                    </p>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding: 20px; background: rgba(99, 102, 241, 0.05); border-radius: 12px; border: 1px solid rgba(99, 102, 241, 0.1);">
+                        <div style="text-align: center;">
+                            <div style="font-size: 32px; margin-bottom: 8px;">🚀</div>
+                            <div style="font-size: 13px; font-weight: 600; color: #1f2937;">Quick Start</div>
+                            <div style="font-size: 12px; color: #6b7280; margin-top: 4px;">Begin a new conversation</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 32px; margin-bottom: 8px;">⚙️</div>
+                            <div style="font-size: 13px; font-weight: 600; color: #1f2937;">Select Model</div>
+                            <div style="font-size: 12px; color: #6b7280; margin-top: 4px;">Choose your AI</div>
+                        </div>
+                    </div>
                 </div>
+            </div>
 
             <div class="input-container">
                 <div class="input-box">
