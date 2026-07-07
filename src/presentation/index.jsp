@@ -19,6 +19,25 @@
             
             <div class="hero-actions">
                 <a href="views/dashboard.jsp" class="btn-primary">Go to Dashboard</a>
+                <a href="#" class="btn-secondary">Learn More</a>
+            </div>
+
+            <div class="features">
+                <div class="feature-card">
+                    <div class="feature-icon">🚀</div>
+                    <h3>Fast & Scalable</h3>
+                    <p>Built for performance and growth</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔒</div>
+                    <h3>Secure</h3>
+                    <p>Enterprise-grade security</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🎯</div>
+                    <h3>Intuitive</h3>
+                    <p>Simple yet powerful interface</p>
+                </div>
             </div>
         </div>
     </main>
