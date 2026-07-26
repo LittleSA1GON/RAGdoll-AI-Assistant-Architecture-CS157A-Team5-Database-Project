@@ -160,3 +160,62 @@ button, input, select { font-family: inherit; color: inherit; outline: none; }
 .feature-icon { font-size: 40px; margin-bottom: 12px; }
 .feature-card h3 { font-size: 16px; font-weight: 600; margin-bottom: 8px; color: var(--text-primary); }
 .feature-card p { font-size: 14px; color: var(--text-secondary); margin: 0; }
+/* dashboard query/response display */
+.chat-container:not(.empty-state) { align-items: stretch; justify-content: flex-start; }
+.conversation { width: 100%; padding: 24px 20px 40px; }
+
+.welcome-state { max-width: 500px; margin: 0 auto; text-align: center; }
+.welcome-logo { width: 52px; height: 52px; margin: 0 auto 16px; border-radius: 14px; display: grid; place-items: center; background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary)); color: white; font-size: 24px; font-weight: 800; box-shadow: var(--shadow-md); }
+.welcome-state h1 { margin-bottom: 8px; font-size: 28px; line-height: 1.25; }
+.welcome-state p { color: var(--text-secondary); }
+
+.message { width: 100%; max-width: 820px; margin: 0 auto 26px; }
+.message-inner { display: flex; align-items: flex-start; gap: 12px; }
+.message-body { min-width: 0; max-width: calc(100% - 48px); }
+.message-label { margin-bottom: 5px; font-size: 13px; font-weight: 700; color: var(--text-primary); }
+.message-avatar { flex: 0 0 34px; width: 34px; height: 34px; border-radius: 9px; display: grid; place-items: center; background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary)); color: white; font-size: 13px; font-weight: 800; }
+.message-bubble { font-size: 15px; line-height: 1.7; overflow-wrap: anywhere; }
+
+.message-user .message-inner { justify-content: flex-end; }
+.message-user .message-body { display: flex; flex-direction: column; align-items: flex-end; max-width: 75%; }
+.message-user .message-bubble { padding: 10px 15px; border-radius: 18px; background: var(--hover-color); }
+.message-assistant .message-bubble { width: 100%; }
+
+.message-bubble p { margin-bottom: 12px; }
+.message-bubble p:last-child { margin-bottom: 0; }
+.message-bubble ul, .message-bubble ol { margin: 8px 0 12px 24px; }
+.message-bubble li { margin-bottom: 4px; }
+.message-bubble h3, .message-bubble h4, .message-bubble h5 { margin: 16px 0 8px; line-height: 1.35; }
+.message-bubble a { color: var(--accent-primary); text-decoration: underline; }
+.message-bubble code { padding: 2px 5px; border-radius: 4px; background: var(--hover-color); font-family: Consolas, Monaco, monospace; font-size: 0.92em; }
+.message-bubble pre { max-width: 100%; margin: 12px 0; padding: 14px; overflow-x: auto; border: 1px solid var(--border-color); border-radius: 8px; background: #111827; color: #f9fafb; }
+.message-bubble pre code { padding: 0; background: transparent; color: inherit; }
+.message-bubble blockquote { margin: 12px 0; padding-left: 14px; border-left: 3px solid var(--accent-primary); color: var(--text-secondary); }
+.error-message .message-bubble { color: #b91c1c; }
+
+.input-container { flex-direction: column; align-items: center; gap: 7px; padding: 16px 24px 12px; }
+.input-box textarea { flex: 1; min-height: 24px; max-height: 180px; resize: none; overflow-y: auto; border: none; background: transparent; font: inherit; font-size: 15px; line-height: 1.5; outline: none; }
+.input-box textarea::placeholder { color: var(--text-placeholder); }
+.plus-btn { padding: 0; border: none; background: transparent; }
+.send-btn { flex: 0 0 34px; width: 34px; height: 34px; margin-left: 12px; border: none; border-radius: 50%; background: var(--accent-primary); color: white; font-size: 18px; font-weight: 700; cursor: pointer; transition: all 0.2s ease; }
+.send-btn:hover:not(:disabled) { background: var(--accent-secondary); transform: translateY(-1px); }
+.send-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.input-hint { font-size: 11px; color: var(--text-secondary); text-align: center; }
+
+.typing-indicator { display: flex; gap: 5px; padding: 8px 0; }
+.typing-indicator span { width: 7px; height: 7px; border-radius: 50%; background: var(--text-secondary); animation: typing-bounce 1.2s infinite ease-in-out; }
+.typing-indicator span:nth-child(2) { animation-delay: 0.15s; }
+.typing-indicator span:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes typing-bounce {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.45; }
+    30% { transform: translateY(-4px); opacity: 1; }
+}
+
+@media (max-width: 720px) {
+    .sidebar { width: 210px; }
+    .conversation { padding: 20px 14px 32px; }
+    .message-user .message-body { max-width: 88%; }
+    .input-container { padding: 12px; }
+    .input-box { padding: 10px 14px; }
+}

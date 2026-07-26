@@ -228,7 +228,8 @@ class LoadedModel:
     def get(self, model_path: Path) -> Any:
         if Llama is None:
             raise RuntimeError(
-                "llama-cpp-python is not installed. Run: pip install -r requirements.txt"
+                "llama-cpp-python is not installed. Run install_dependencies.bat or: "
+                "python -m pip install --user -r requirements.txt"
             )
 
         with self._load_lock:

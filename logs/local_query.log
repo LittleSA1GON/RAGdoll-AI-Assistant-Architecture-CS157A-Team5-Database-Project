@@ -1,0 +1,15 @@
+INFO:     Started server process [28936]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:55002 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53799 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63189 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63189 - "OPTIONS /api/query HTTP/1.1" 200 OK
+llama_kv_cache_iswa: using full-size SWA cache (ref: https://github.com/ggml-org/llama.cpp/pull/13194#issuecomment-2868343055)
+INFO:     127.0.0.1:63189 - "POST /api/query HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63471 - "POST /api/query HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56427 - "POST /api/query HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50810 - "POST /api/query HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64771 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60802 - "GET /api/models HTTP/1.1" 200 OK

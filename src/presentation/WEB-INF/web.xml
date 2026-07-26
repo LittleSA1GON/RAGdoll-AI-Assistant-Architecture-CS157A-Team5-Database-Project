@@ -8,6 +8,23 @@
 
     <display-name>RAGdoll AI Assistant</display-name>
 
+    <!-- Clean up Connector/J resources before this application is stopped. -->
+    <listener>
+        <listener-class>application.MySqlCleanupListener</listener-class>
+    </listener>
+
+    <filter>
+        <filter-name>LocalQueryStartupFilter</filter-name>
+        <filter-class>application.LocalQueryStartupFilter</filter-class>
+    </filter>
+
+    <filter-mapping>
+        <filter-name>LocalQueryStartupFilter</filter-name>
+        <url-pattern>/views/dashboard.jsp</url-pattern>
+        <dispatcher>REQUEST</dispatcher>
+        <dispatcher>FORWARD</dispatcher>
+    </filter-mapping>
+
     <servlet>
         <servlet-name>HomeServlet</servlet-name>
         <servlet-class>application.HomeServlet</servlet-class>
