@@ -45,7 +45,10 @@ CREATE TABLE `Models` (
     model_id INT PRIMARY KEY,
     model_name VARCHAR(100) NOT NULL UNIQUE,
     model_type VARCHAR(50) NOT NULL,
-    model_path VARCHAR(255) NOT NULL
+    model_path VARCHAR(255) NOT NULL,
+    model_location VARCHAR(20) NOT NULL DEFAULT 'local',
+    server_model_id VARCHAR(100) NOT NULL DEFAULT '',
+    is_enabled TINYINT(1) NOT NULL DEFAULT 1
 );
 
 CREATE TABLE `Documents` (
@@ -53,6 +56,9 @@ CREATE TABLE `Documents` (
     user_id INT NOT NULL,
     file_name VARCHAR(255) NOT NULL,
     file_type VARCHAR(50) NOT NULL,
+    file_path VARCHAR(255) NULL,
+    processing_status VARCHAR(20) NOT NULL DEFAULT 'uploaded',
+    processing_error TEXT NULL,
     uploaded_at DATETIME NOT NULL,
     FOREIGN KEY (user_id) REFERENCES `Users`(user_id)
 );
