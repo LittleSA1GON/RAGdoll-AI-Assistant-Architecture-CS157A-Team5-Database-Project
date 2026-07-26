@@ -75,7 +75,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - RAGdoll AI Assistant</title>
-    <link rel="stylesheet" href="../css/style.css?v=4">
+    <link rel="stylesheet" href="../css/style.css?v=5">
 </head>
 <body class="dashboard-body">
     <div class="app-shell">
@@ -166,6 +166,7 @@
             ? Number(userProfile.dataset.userId)
             : 0;
         let currentConversationId = null;
+        let queryInProgress = false;
         const queryForm = document.getElementById("query-form");
         const queryInput = document.getElementById("query-input");
         const sendButton = document.getElementById("send-btn");
@@ -464,6 +465,85 @@
             });
         }
 
+        function resetConversationView() {
+            currentConversationId = null;
+            setActiveConversation(null);
+            conversation.replaceChildren(createWelcomeState());
+            chatContainer.classList.add("empty-state");
+            queryInput.value = "";
+            resizeComposer();
+        }
+
+        async function deleteConversation(conversationId, conversationTitle, deleteButton) {
+            if (queryInProgress && Number(currentConversationId) === Number(conversationId)) {
+                window.alert(
+                    "Wait for the current response to finish before deleting this conversation."
+                );
+                return;
+            }
+
+            const confirmed = window.confirm(
+                'Delete "' + conversationTitle + '"?\n\n' +
+                "This permanently deletes the conversation and all of its " +
+                "saved queries and responses from MySQL."
+            );
+
+            if (!confirmed) {
+                return;
+            }
+
+            deleteButton.disabled = true;
+            inputHint.textContent = "Deleting conversation...";
+
+            try {
+                const response = await fetch(
+                    API_BASE_URL + "/api/conversations/" +
+                    encodeURIComponent(conversationId) +
+                    "?user_id=" + encodeURIComponent(CURRENT_USER_ID),
+                    {
+                        method: "DELETE",
+                        cache: "no-store"
+                    }
+                );
+
+                let result = {};
+                try {
+                    result = await response.json();
+                } catch (ignored) {
+                    result = {};
+                }
+
+                if (!response.ok) {
+                    throw new Error(
+                        result.detail || "Unable to delete the conversation."
+                    );
+                }
+
+                const deletedCurrentConversation =
+                    Number(currentConversationId) === Number(conversationId);
+
+                if (deletedCurrentConversation) {
+                    resetConversationView();
+                }
+
+                await loadPastChats(
+                    deletedCurrentConversation ? null : currentConversationId
+                );
+
+                inputHint.textContent =
+                    "Conversation deleted from MySQL with " +
+                    Number(result.deleted_queries || 0) + " queries and " +
+                    Number(result.deleted_responses || 0) + " responses.";
+            } catch (error) {
+                deleteButton.disabled = false;
+                inputHint.textContent =
+                    "The conversation could not be deleted: " + error.message;
+                window.alert(
+                    "Unable to delete the conversation.\n\n" + error.message
+                );
+            }
+        }
+
         async function loadPastChats(activeConversationId) {
             try {
                 const response = await fetch(
@@ -489,19 +569,44 @@
                 }
 
                 conversations.forEach(function (savedConversation) {
+                    const conversationId = Number(savedConversation.conversation_id);
+                    const conversationTitle =
+                        savedConversation.title || "Saved conversation";
+
                     const item = document.createElement("div");
                     item.className = "chat-item";
-                    item.dataset.conversationId = String(savedConversation.conversation_id);
+                    item.dataset.conversationId = String(conversationId);
 
                     const dot = document.createElement("span");
                     dot.className = "gray-circle";
 
                     const title = document.createElement("span");
-                    title.textContent = savedConversation.title || "Saved conversation";
+                    title.className = "chat-item-title";
+                    title.textContent = conversationTitle;
+                    title.title = conversationTitle;
 
-                    item.append(dot, title);
+                    const deleteButton = document.createElement("button");
+                    deleteButton.type = "button";
+                    deleteButton.className = "delete-chat-btn";
+                    deleteButton.textContent = "×";
+                    deleteButton.title = "Delete conversation";
+                    deleteButton.setAttribute(
+                        "aria-label",
+                        "Delete conversation " + conversationTitle
+                    );
+
+                    deleteButton.addEventListener("click", function (event) {
+                        event.stopPropagation();
+                        deleteConversation(
+                            conversationId,
+                            conversationTitle,
+                            deleteButton
+                        );
+                    });
+
+                    item.append(dot, title, deleteButton);
                     item.addEventListener("click", function () {
-                        openConversation(Number(savedConversation.conversation_id));
+                        openConversation(conversationId);
                     });
                     pastChatList.appendChild(item);
                 });
@@ -662,6 +767,7 @@
                 return;
             }
 
+            queryInProgress = true;
             addMessage("user", prompt);
             queryInput.value = "";
             resizeComposer();
@@ -737,18 +843,14 @@
                 );
                 inputHint.textContent = "The last request failed. Check the local API terminal for details.";
             } finally {
+                queryInProgress = false;
                 setComposerEnabled(true);
                 queryInput.focus();
             }
         });
 
         newChatButton.addEventListener("click", function () {
-            currentConversationId = null;
-            setActiveConversation(null);
-            conversation.replaceChildren(createWelcomeState());
-            chatContainer.classList.add("empty-state");
-            queryInput.value = "";
-            resizeComposer();
+            resetConversationView();
             inputHint.textContent = "RAGdoll runs the selected GGUF model on your computer.";
             if (!queryInput.disabled) {
                 queryInput.focus();

@@ -529,6 +529,110 @@ class ConversationDatabase:
             "messages": messages,
         }
 
+    def delete_conversation(
+        self, conversation_id: int, user_id: int
+    ) -> Dict[str, int]:
+        """Delete a conversation and its unshared queries and responses.
+
+        The database schema cascades deletion from Queries to Responses and from
+        Conversations to the Contains/Owns relationship rows. The explicit
+        orphan checks also keep this safe if a query or response is ever linked
+        to more than one conversation.
+        """
+
+        if user_id == DEFAULT_USER_ID:
+            self.ensure_default_user()
+
+        with CONVERSATION_WRITE_LOCK:
+            with _database_connection() as connection:
+                cursor = connection.cursor(dictionary=True)
+                try:
+                    self._verify_conversation(cursor, conversation_id, user_id)
+
+                    cursor.execute(
+                        """
+                        SELECT query_id
+                        FROM Contains_Query
+                        WHERE conversation_id = %s
+                        """,
+                        (conversation_id,),
+                    )
+                    query_ids = [int(row["query_id"]) for row in cursor.fetchall()]
+
+                    cursor.execute(
+                        """
+                        SELECT DISTINCT r.response_id
+                        FROM Responses r
+                        LEFT JOIN Contains_Response cr
+                            ON cr.response_id = r.response_id
+                        WHERE cr.conversation_id = %s
+                           OR r.query_id IN (
+                               SELECT query_id
+                               FROM Contains_Query
+                               WHERE conversation_id = %s
+                           )
+                        """,
+                        (conversation_id, conversation_id),
+                    )
+                    response_ids = [
+                        int(row["response_id"]) for row in cursor.fetchall()
+                    ]
+
+                    cursor.execute(
+                        """
+                        DELETE FROM Conversations
+                        WHERE conversation_id = %s AND user_id = %s
+                        """,
+                        (conversation_id, user_id),
+                    )
+                    if cursor.rowcount != 1:
+                        raise LookupError(
+                            f"Conversation {conversation_id} does not belong to "
+                            f"user {user_id}."
+                        )
+
+                    if response_ids:
+                        placeholders = ", ".join(["%s"] * len(response_ids))
+                        cursor.execute(
+                            f"""
+                            DELETE FROM Responses
+                            WHERE response_id IN ({placeholders})
+                              AND NOT EXISTS (
+                                  SELECT 1
+                                  FROM Contains_Response cr
+                                  WHERE cr.response_id = Responses.response_id
+                              )
+                            """,
+                            tuple(response_ids),
+                        )
+
+                    if query_ids:
+                        placeholders = ", ".join(["%s"] * len(query_ids))
+                        cursor.execute(
+                            f"""
+                            DELETE FROM Queries
+                            WHERE query_id IN ({placeholders})
+                              AND NOT EXISTS (
+                                  SELECT 1
+                                  FROM Contains_Query cq
+                                  WHERE cq.query_id = Queries.query_id
+                              )
+                            """,
+                            tuple(query_ids),
+                        )
+
+                    connection.commit()
+                    return {
+                        "conversation_id": conversation_id,
+                        "deleted_queries": len(query_ids),
+                        "deleted_responses": len(response_ids),
+                    }
+                except Exception:
+                    connection.rollback()
+                    raise
+                finally:
+                    cursor.close()
+
     def save_turn(
         self,
         user_id: int,
@@ -869,7 +973,7 @@ def _generate_response(
             ) from completion_error
 
 
-app = FastAPI(title="RAGdoll Local GGUF API", version="1.1")
+app = FastAPI(title="RAGdoll Local GGUF API", version="1.2")
 
 allowed_origins = [
     origin.strip()
@@ -883,7 +987,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
     allow_credentials=False,
-    allow_methods=["GET", "POST"],
+    allow_methods=["GET", "POST", "DELETE"],
     allow_headers=["Content-Type"],
 )
 
@@ -939,6 +1043,27 @@ def get_conversation(conversation_id: int, user_id: int = DEFAULT_USER_ID) -> Di
         raise HTTPException(
             status_code=503,
             detail=f"Unable to load the conversation from MySQL: {error}",
+        ) from error
+
+
+@app.delete("/api/conversations/{conversation_id}")
+def delete_conversation(
+    conversation_id: int, user_id: int = DEFAULT_USER_ID
+) -> Dict[str, Any]:
+    try:
+        deleted = CONVERSATION_DATABASE.delete_conversation(
+            conversation_id, user_id
+        )
+        return {
+            "deleted": True,
+            **deleted,
+        }
+    except LookupError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except Exception as error:
+        raise HTTPException(
+            status_code=503,
+            detail=f"Unable to delete the conversation from MySQL: {error}",
         ) from error
 
 

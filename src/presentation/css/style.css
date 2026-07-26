@@ -219,3 +219,45 @@ button, input, select { font-family: inherit; color: inherit; outline: none; }
     .input-container { padding: 12px; }
     .input-box { padding: 10px 14px; }
 }
+
+
+/* saved conversation delete control */
+.chat-item-title {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.delete-chat-btn {
+    flex: 0 0 26px;
+    width: 26px;
+    height: 26px;
+    margin-left: 6px;
+    border: none;
+    border-radius: 5px;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 19px;
+    line-height: 1;
+    cursor: pointer;
+    opacity: 0.65;
+    transition: background 0.2s ease, color 0.2s ease, opacity 0.2s ease;
+}
+
+.chat-item:hover .delete-chat-btn,
+.chat-item.active .delete-chat-btn,
+.delete-chat-btn:focus-visible {
+    opacity: 1;
+}
+
+.delete-chat-btn:hover:not(:disabled) {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.delete-chat-btn:disabled {
+    cursor: wait;
+    opacity: 0.45;
+}
