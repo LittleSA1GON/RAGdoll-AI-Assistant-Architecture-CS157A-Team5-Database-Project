@@ -27,6 +27,17 @@
                 
                 <button type="submit" class="auth-submit-btn">Continue</button>
             </form>
+
+            <div class="auth-footer">
+                <p><strong>Test account</strong></p>
+                <p>Open the dashboard with the temporary John Roblox account.</p>
+                <form action="dashboard.jsp" method="get">
+                    <input type="hidden" name="test_user" value="john_roblox">
+                    <button type="submit" class="auth-submit-btn">
+                        Continue as John Roblox
+                    </button>
+                </form>
+            </div>
             
             <div class="auth-footer">
                 <p>Don't have an account? <a href="#">Sign up</a></p>

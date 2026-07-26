@@ -1,4 +1,74 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%!
+    private String escapeHtml(Object value) {
+        if (value == null) {
+            return "";
+        }
+        return String.valueOf(value)
+            .replace("&", "&amp;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+            .replace("\"", "&quot;")
+            .replace("'", "&#39;");
+    }
+
+    private String userInitials(String displayName) {
+        if (displayName == null || displayName.trim().isEmpty()) {
+            return "U";
+        }
+        String[] parts = displayName.trim().split("\\s+");
+        StringBuilder initials = new StringBuilder();
+        for (String part : parts) {
+            if (!part.isEmpty() && initials.length() < 2) {
+                initials.append(Character.toUpperCase(part.charAt(0)));
+            }
+        }
+        return initials.length() == 0 ? "U" : initials.toString();
+    }
+%>
+<%
+    if ("john_roblox".equals(request.getParameter("test_user"))) {
+        session.setAttribute("userId", Integer.valueOf(0));
+        session.setAttribute("userDisplayName", "John Roblox");
+        session.setAttribute("username", "john_roblox");
+        session.setAttribute("userTier", "Free");
+        session.setAttribute("temporaryUser", Boolean.TRUE);
+        response.sendRedirect(request.getContextPath() + "/views/dashboard.jsp");
+        return;
+    }
+
+    Object sessionUserId = session.getAttribute("userId");
+    if (sessionUserId == null) {
+        session.setAttribute("userId", Integer.valueOf(0));
+        session.setAttribute("userDisplayName", "John Roblox");
+        session.setAttribute("username", "john_roblox");
+        session.setAttribute("userTier", "Free");
+        session.setAttribute("temporaryUser", Boolean.TRUE);
+        sessionUserId = Integer.valueOf(0);
+    }
+
+    int currentUserId;
+    try {
+        currentUserId = Integer.parseInt(String.valueOf(sessionUserId));
+    } catch (NumberFormatException ignored) {
+        currentUserId = 0;
+    }
+
+    String currentDisplayName = String.valueOf(
+        session.getAttribute("userDisplayName") != null
+            ? session.getAttribute("userDisplayName")
+            : "John Roblox"
+    );
+    String currentTier = String.valueOf(
+        session.getAttribute("userTier") != null
+            ? session.getAttribute("userTier")
+            : "Free"
+    );
+    boolean currentUserTemporary = Boolean.TRUE.equals(
+        session.getAttribute("temporaryUser")
+    );
+    String currentInitials = userInitials(currentDisplayName);
+%>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -21,19 +91,28 @@
 
                 <div class="past-chats">
                     <h3>Past Chats</h3>
-                    <div class="chat-item active">
-                        <span class="gray-circle"></span>
-                        <span>Default Chat</span>
+                    <div id="past-chat-list">
+                        <div class="chat-item">
+                            <span class="gray-circle"></span>
+                            <span>Loading conversations...</span>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <div class="sidebar-bottom">
-                <div class="user-profile">
-                    <div class="avatar">JR</div>
+                <div class="user-profile" data-user-id="<%= currentUserId %>">
+                    <div class="avatar"><%= escapeHtml(currentInitials) %></div>
                     <div class="user-info">
-                        <div class="user-name">John Roblox</div>
-                        <div class="user-tier">Free</div>
+                        <div class="user-name"><%= escapeHtml(currentDisplayName) %></div>
+                        <div class="user-tier">
+                            <%= escapeHtml(currentTier) %>
+                            <% if (currentUserTemporary) { %>
+                                · Temporary (ID <%= currentUserId %>)
+                            <% } else { %>
+                                · ID <%= currentUserId %>
+                            <% } %>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -82,6 +161,11 @@
 
     <script>
         const API_BASE_URL = window.RAGDOLL_API_URL || "http://127.0.0.1:8000";
+        const userProfile = document.querySelector(".user-profile");
+        const CURRENT_USER_ID = userProfile
+            ? Number(userProfile.dataset.userId)
+            : 0;
+        let currentConversationId = null;
         const queryForm = document.getElementById("query-form");
         const queryInput = document.getElementById("query-input");
         const sendButton = document.getElementById("send-btn");
@@ -89,6 +173,7 @@
         const chatContainer = document.getElementById("chat-container");
         const conversation = document.getElementById("conversation");
         const newChatButton = document.querySelector(".new-chat-btn");
+        const pastChatList = document.getElementById("past-chat-list");
         const inputHint = document.getElementById("input-hint");
 
         function selectedModelLabel() {
@@ -281,7 +366,7 @@
             }
         }
 
-        function addMessage(role, text, extraClass) {
+        function addMessage(role, text, extraClass, assistantLabel) {
             prepareChat();
 
             const message = document.createElement("article");
@@ -303,7 +388,9 @@
 
             const label = document.createElement("div");
             label.className = "message-label";
-            label.textContent = role === "user" ? "You" : selectedModelLabel();
+            label.textContent = role === "user"
+                ? "You"
+                : (assistantLabel || selectedModelLabel());
 
             const bubble = document.createElement("div");
             bubble.className = "message-bubble";
@@ -366,6 +453,117 @@
             return new Promise(function (resolve) {
                 window.setTimeout(resolve, milliseconds);
             });
+        }
+
+        function setActiveConversation(conversationId) {
+            document.querySelectorAll(".chat-item[data-conversation-id]").forEach(function (item) {
+                item.classList.toggle(
+                    "active",
+                    Number(item.dataset.conversationId) === Number(conversationId)
+                );
+            });
+        }
+
+        async function loadPastChats(activeConversationId) {
+            try {
+                const response = await fetch(
+                    API_BASE_URL + "/api/conversations?user_id=" + encodeURIComponent(CURRENT_USER_ID),
+                    { cache: "no-store" }
+                );
+                const result = await response.json();
+                if (!response.ok) {
+                    throw new Error(result.detail || "Unable to load conversations.");
+                }
+
+                pastChatList.replaceChildren();
+                const conversations = Array.isArray(result.conversations)
+                    ? result.conversations
+                    : [];
+
+                if (conversations.length === 0) {
+                    const emptyItem = document.createElement("div");
+                    emptyItem.className = "chat-item";
+                    emptyItem.textContent = "No saved chats yet";
+                    pastChatList.appendChild(emptyItem);
+                    return;
+                }
+
+                conversations.forEach(function (savedConversation) {
+                    const item = document.createElement("div");
+                    item.className = "chat-item";
+                    item.dataset.conversationId = String(savedConversation.conversation_id);
+
+                    const dot = document.createElement("span");
+                    dot.className = "gray-circle";
+
+                    const title = document.createElement("span");
+                    title.textContent = savedConversation.title || "Saved conversation";
+
+                    item.append(dot, title);
+                    item.addEventListener("click", function () {
+                        openConversation(Number(savedConversation.conversation_id));
+                    });
+                    pastChatList.appendChild(item);
+                });
+
+                setActiveConversation(activeConversationId || currentConversationId);
+            } catch (error) {
+                pastChatList.replaceChildren();
+                const errorItem = document.createElement("div");
+                errorItem.className = "chat-item";
+                errorItem.textContent = "Conversation history unavailable";
+                errorItem.title = error.message;
+                pastChatList.appendChild(errorItem);
+            }
+        }
+
+        async function openConversation(conversationId) {
+            setComposerEnabled(false);
+            inputHint.textContent = "Loading saved conversation...";
+
+            try {
+                const response = await fetch(
+                    API_BASE_URL + "/api/conversations/" + encodeURIComponent(conversationId) +
+                    "?user_id=" + encodeURIComponent(CURRENT_USER_ID),
+                    { cache: "no-store" }
+                );
+                const result = await response.json();
+                if (!response.ok) {
+                    throw new Error(result.detail || "Unable to load the conversation.");
+                }
+
+                currentConversationId = Number(result.conversation_id);
+                conversation.replaceChildren();
+                chatContainer.classList.remove("empty-state");
+
+                const messages = Array.isArray(result.messages) ? result.messages : [];
+                if (messages.length === 0) {
+                    conversation.appendChild(createWelcomeState());
+                    chatContainer.classList.add("empty-state");
+                } else {
+                    messages.forEach(function (message) {
+                        addMessage(
+                            message.role,
+                            message.text || "",
+                            "",
+                            message.model_name || "RAGdoll"
+                        );
+                    });
+                }
+
+                setActiveConversation(currentConversationId);
+                inputHint.textContent = "Saved conversation loaded. New messages will use its history.";
+            } catch (error) {
+                addMessage(
+                    "assistant",
+                    "**Unable to load the saved conversation.**\n\n" + error.message,
+                    "error-message"
+                );
+                inputHint.textContent = "The saved conversation could not be loaded.";
+            } finally {
+                setComposerEnabled(modelSelect.options.length > 0 && Boolean(modelSelect.value));
+                queryInput.focus();
+            }
         }
 
         async function fetchModelsWithStartupRetry() {
@@ -474,9 +672,13 @@
             try {
                 const requestBody = {
                     query_text: prompt,
+                    user_id: CURRENT_USER_ID,
                     model_file: selectedOption.value,
                     max_tokens: 512
                 };
+                if (currentConversationId !== null) {
+                    requestBody.conversation_id = currentConversationId;
+                }
                 if (selectedOption.dataset.modelId) {
                     requestBody.model_id = Number(selectedOption.dataset.modelId);
                 }
@@ -499,10 +701,33 @@
                 }
 
                 loadingMessage.remove();
-                addMessage("assistant", result.response_text || "No response was returned.");
-                inputHint.textContent = result.elapsed_seconds !== undefined
-                    ? "Generated locally in " + result.elapsed_seconds + " seconds."
-                    : "Generated locally.";
+                addMessage(
+                    "assistant",
+                    result.response_text || "No response was returned.",
+                    "",
+                    result.model_name || selectedModelLabel()
+                );
+
+                if (result.conversation_id !== null && result.conversation_id !== undefined) {
+                    currentConversationId = Number(result.conversation_id);
+                    await loadPastChats(currentConversationId);
+                }
+
+                if (result.conversation_saved === false) {
+                    inputHint.textContent = "Response generated, but MySQL could not save this turn: " +
+                        (result.conversation_error || "unknown database error");
+                } else {
+                    const rememberedTurns = Number(result.remembered_turn_count || 0);
+                    const memoryMessage = rememberedTurns > 0
+                        ? " Used " + rememberedTurns +
+                          (rememberedTurns === 1 ? " previous turn." : " previous turns.")
+                        : " This is the first saved turn in this conversation.";
+
+                    inputHint.textContent = result.elapsed_seconds !== undefined
+                        ? "Saved and generated locally in " + result.elapsed_seconds +
+                          " seconds." + memoryMessage
+                        : "Conversation saved in MySQL." + memoryMessage;
+                }
             } catch (error) {
                 loadingMessage.remove();
                 addMessage(
@@ -518,6 +743,8 @@
         });
 
         newChatButton.addEventListener("click", function () {
+            currentConversationId = null;
+            setActiveConversation(null);
             conversation.replaceChildren(createWelcomeState());
             chatContainer.classList.add("empty-state");
             queryInput.value = "";
@@ -528,7 +755,9 @@
             }
         });
 
-        loadAvailableModels();
+        loadAvailableModels().then(function () {
+            loadPastChats(null);
+        });
     </script>
 </body>
 </html>

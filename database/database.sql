@@ -48,7 +48,8 @@ CREATE TABLE `Models` (
     model_path VARCHAR(255) NOT NULL,
     model_location VARCHAR(20) NOT NULL DEFAULT 'local',
     server_model_id VARCHAR(100) NOT NULL DEFAULT '',
-    is_enabled TINYINT(1) NOT NULL DEFAULT 1
+    is_enabled TINYINT(1) NOT NULL DEFAULT 1,
+    is_available TINYINT(1) NOT NULL DEFAULT 0
 );
 
 CREATE TABLE `Documents` (
@@ -269,6 +270,7 @@ CREATE TABLE `Splits_Into` (
 );
 
 INSERT INTO `Users` VALUES
+(0, 'john_roblox', 'john.roblox@ragdoll.local', '2026-07-01 11:00:00'),
 (1, 'ethanv', 'ethan.vu@sjsu.edu', '2026-07-01 10:00:00'),
 (2, 'geolalu', 'geo.lalu@sjsu.edu', '2026-07-01 10:05:00'),
 (3, 'namank', 'naman.kumar@sjsu.edu', '2026-07-01 10:10:00'),
@@ -328,19 +330,23 @@ INSERT INTO `Payments` VALUES
 (7, 7, 7, 'Completed', '2026-07-02 12:30:00'),
 (8, 8, 8, 'Completed', '2026-07-02 12:35:00'),
 (9, 9, 9, 'Completed', '2026-07-02 12:40:00'),
-(10, 10, 5, 'Completed', '2026-07-02 12:45:00');
+(10, 10, 5, 'Completed', '2026-07-02 12:45:00'),
+(11, 0, 1, 'Free Tier', '2026-07-02 13:00:00');
 
-INSERT INTO `Models` VALUES
-(1, 'Llama 3.1 8B', 'LLM', '/models/llama-3.1-8b.gguf'),
-(2, 'Gemma 2B', 'LLM', '/models/gemma-2b.gguf'),
-(3, 'Mistral 7B', 'LLM', '/models/mistral-7b.gguf'),
-(4, 'Phi 3 Mini', 'LLM', '/models/phi-3-mini.gguf'),
-(5, 'Mythos Vision', 'Multimodal', '/models/mythos-vision.safetensors'),
-(6, 'MiniLM Embedder', 'Embedding', '/models/all-MiniLM-L6-v2'),
-(7, 'BGE Small Embedder', 'Embedding', '/models/bge-small-en-v1.5'),
-(8, 'CodeLlama 7B', 'Code', '/models/codellama-7b.gguf'),
-(9, 'TinyLlama 1.1B', 'LLM', '/models/tinyllama-1.1b.gguf'),
-(10, 'Whisper Base', 'Speech', '/models/whisper-base.bin');
+INSERT INTO `Models`
+    (model_id, model_name, model_type, model_path, model_location,
+     server_model_id, is_enabled, is_available)
+VALUES
+(1, 'Llama 3.1 8B', 'LLM', '/models/llama-3.1-8b.gguf', 'local', '', 1, 0),
+(2, 'Gemma 2B', 'LLM', '/models/gemma-2b.gguf', 'local', '', 1, 0),
+(3, 'Mistral 7B', 'LLM', '/models/mistral-7b.gguf', 'local', '', 1, 0),
+(4, 'Phi 3 Mini', 'LLM', '/models/phi-3-mini.gguf', 'local', '', 1, 0),
+(5, 'Mythos Vision', 'Multimodal', '/models/mythos-vision.safetensors', 'local', '', 1, 0),
+(6, 'MiniLM Embedder', 'Embedding', '/models/all-MiniLM-L6-v2', 'local', '', 1, 0),
+(7, 'BGE Small Embedder', 'Embedding', '/models/bge-small-en-v1.5', 'local', '', 1, 0),
+(8, 'CodeLlama 7B', 'Code', '/models/codellama-7b.gguf', 'local', '', 1, 0),
+(9, 'TinyLlama 1.1B', 'LLM', '/models/tinyllama-1.1b.gguf', 'local', '', 1, 0),
+(10, 'Whisper Base', 'Speech', '/models/whisper-base.bin', 'local', '', 1, 0);
 
 INSERT INTO `Documents` VALUES
 (1, 11, 'rag_overview.pdf', 'PDF', '2026-07-03 09:00:00'),
@@ -436,7 +442,8 @@ INSERT INTO `Pays` VALUES
 (7, 7),
 (8, 8),
 (9, 9),
-(10, 10);
+(10, 10),
+(0, 11);
 
 INSERT INTO `Sets` VALUES
 (1, 1),
@@ -448,7 +455,8 @@ INSERT INTO `Sets` VALUES
 (7, 7),
 (8, 8),
 (9, 9),
-(5, 10);
+(5, 10),
+(1, 11);
 
 INSERT INTO `Has` VALUES
 (1, 1, '2026-07-02 12:00:00'),
@@ -460,7 +468,8 @@ INSERT INTO `Has` VALUES
 (7, 7, '2026-07-02 12:30:00'),
 (8, 8, '2026-07-02 12:35:00'),
 (9, 9, '2026-07-02 12:40:00'),
-(10, 5, '2026-07-02 12:45:00');
+(10, 5, '2026-07-02 12:45:00'),
+(0, 1, '2026-07-02 13:00:00');
 
 INSERT INTO `Creates` VALUES
 (1, 1),

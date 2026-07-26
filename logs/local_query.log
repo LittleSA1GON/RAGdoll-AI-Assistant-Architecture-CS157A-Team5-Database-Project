@@ -13,3 +13,94 @@ INFO:     127.0.0.1:56427 - "POST /api/query HTTP/1.1" 200 OK
 INFO:     127.0.0.1:50810 - "POST /api/query HTTP/1.1" 200 OK
 INFO:     127.0.0.1:64771 - "GET /health HTTP/1.1" 200 OK
 INFO:     127.0.0.1:60802 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     Started server process [16880]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:54951 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51237 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57491 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53222 - "OPTIONS /api/query HTTP/1.1" 200 OK
+llama_kv_cache_iswa: using full-size SWA cache (ref: https://github.com/ggml-org/llama.cpp/pull/13194#issuecomment-2868343055)
+INFO:     127.0.0.1:53222 - "POST /api/query HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63237 - "POST /api/query HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64965 - "POST /api/query HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58173 - "POST /api/query HTTP/1.1" 200 OK
+INFO:     Started server process [21140]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:56030 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56030 - "GET /api/conversations?user_id=1 HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:56030 - "OPTIONS /api/query HTTP/1.1" 200 OK
+llama_kv_cache_iswa: using full-size SWA cache (ref: https://github.com/ggml-org/llama.cpp/pull/13194#issuecomment-2868343055)
+INFO:     127.0.0.1:56030 - "POST /api/query HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50997 - "POST /api/query HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50997 - "POST /api/query HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55090 - "POST /api/query HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58988 - "POST /api/query HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60092 - "POST /api/query HTTP/1.1" 200 OK
+INFO:     Started server process [26300]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:58250 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58250 - "GET /api/conversations?user_id=1 HTTP/1.1" 404 Not Found
+INFO:     Started server process [34056]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:54687 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54687 - "GET /api/conversations?user_id=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62843 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62845 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51895 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51895 - "GET /api/conversations?user_id=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55717 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61361 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61361 - "GET /api/conversations?user_id=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61361 - "OPTIONS /api/query HTTP/1.1" 200 OK
+llama_kv_cache_iswa: using full-size SWA cache (ref: https://github.com/ggml-org/llama.cpp/pull/13194#issuecomment-2868343055)
+INFO:     127.0.0.1:61361 - "POST /api/query HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61361 - "GET /api/conversations?user_id=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64616 - "POST /api/query HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64616 - "GET /api/conversations?user_id=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52041 - "GET /api/conversations/1?user_id=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52041 - "POST /api/query HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52041 - "GET /api/conversations?user_id=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52041 - "GET /api/conversations/1?user_id=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52041 - "GET /api/conversations/2?user_id=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52041 - "POST /api/query HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52041 - "GET /api/conversations?user_id=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62070 - "GET /api/conversations/2?user_id=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62070 - "GET /api/conversations/1?user_id=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62070 - "GET /api/conversations/3?user_id=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62908 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62910 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62070 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62070 - "GET /api/conversations?user_id=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62919 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62070 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62070 - "GET /api/conversations?user_id=0 HTTP/1.1" 200 OK
+INFO:     Started server process [33524]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:57549 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57549 - "GET /api/conversations?user_id=0 HTTP/1.1" 200 OK
+INFO:     Started server process [38888]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:56092 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56092 - "GET /api/conversations?user_id=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56092 - "GET /api/conversations/3?user_id=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56092 - "GET /api/conversations/3?user_id=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55788 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58196 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58196 - "GET /api/conversations?user_id=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57488 - "GET /api/conversations/2?user_id=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62254 - "OPTIONS /api/query HTTP/1.1" 200 OK
+llama_kv_cache_iswa: using full-size SWA cache (ref: https://github.com/ggml-org/llama.cpp/pull/13194#issuecomment-2868343055)
+INFO:     127.0.0.1:62254 - "POST /api/query HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62254 - "GET /api/conversations?user_id=0 HTTP/1.1" 200 OK
