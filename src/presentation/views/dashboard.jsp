@@ -95,13 +95,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - RAGdoll AI Assistant</title>
-    <link rel="stylesheet" href="../css/style.css?v=11">
+    <link rel="icon" type="image/png" href="../images/ragdoll-icon.png">
+    <link rel="stylesheet" href="../css/style.css?v=12">
 </head>
 <body class="dashboard-body">
     <div class="app-shell">
         <aside class="sidebar">
             <div class="sidebar-top">
-                <a href="<%= request.getContextPath() %>/index.jsp" class="site-title brand-home-link">RAGdoll</a>
+                <a href="<%= request.getContextPath() %>/index.jsp" class="site-title brand-home-link brand-lockup" aria-label="RAGdoll home">
+                    <img src="<%= request.getContextPath() %>/images/ragdoll-icon.png" alt="" class="brand-icon">
+                    <span>RAGdoll</span>
+                </a>
 
                 <% if (currentViewerIsAdmin) { %>
                 <a class="dashboard-admin-link" href="admin.jsp">← Admin tools</a>

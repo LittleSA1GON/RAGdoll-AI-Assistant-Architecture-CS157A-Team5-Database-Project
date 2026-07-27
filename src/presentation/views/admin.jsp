@@ -75,12 +75,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin - RAGdoll AI Assistant</title>
-    <link rel="stylesheet" href="../css/style.css?v=11">
+    <link rel="icon" type="image/png" href="../images/ragdoll-icon.png">
+    <link rel="stylesheet" href="../css/style.css?v=12">
     <style>
         .admin-tabs-page { background: var(--bg-main); }
         .admin-tabs-sidebar { flex: 0 0 260px; }
         .admin-brand-lockup { margin-bottom: 28px; padding: 0 8px; }
-        .admin-brand-lockup .site-title { display: inline-block; margin: 0; padding: 0; line-height: 1.15; }
+        .admin-brand-lockup .site-title { display: inline-flex; margin: 0; padding: 0; line-height: 1.15; }
         .admin-tab-list { display: grid; gap: 6px; }
         .admin-tab-button {
             width: 100%; display: flex; align-items: center; gap: 11px;
@@ -198,7 +199,10 @@
     <aside class="sidebar admin-sidebar admin-tabs-sidebar">
         <div class="sidebar-top">
             <div class="admin-brand-lockup">
-                <a href="<%= request.getContextPath() %>/index.jsp" class="site-title brand-home-link">RAGdoll</a>
+                <a href="<%= request.getContextPath() %>/index.jsp" class="site-title brand-home-link brand-lockup" aria-label="RAGdoll home">
+                    <img src="<%= request.getContextPath() %>/images/ragdoll-icon.png" alt="" class="brand-icon">
+                    <span>RAGdoll</span>
+                </a>
                 <span class="sidebar-role-label">ADMIN</span>
             </div>
 

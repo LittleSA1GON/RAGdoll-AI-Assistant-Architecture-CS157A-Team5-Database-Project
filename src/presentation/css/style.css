@@ -69,6 +69,45 @@ button, input, select { font-family: inherit; color: inherit; outline: none; }
 /* text css */
 .site-title, .landing-nav .logo, .auth-header h2 { font-weight: 700; letter-spacing: -0.5px; }
 
+/* shared RAGdoll image branding */
+.brand-lockup {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    width: fit-content;
+}
+.brand-icon {
+    flex: 0 0 auto;
+    width: 30px;
+    height: 30px;
+    object-fit: contain;
+    border-radius: 8px;
+}
+.brand-inline-lockup {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    vertical-align: middle;
+}
+.brand-icon-inline {
+    width: 18px;
+    height: 18px;
+    border-radius: 5px;
+}
+.hero-brand-title {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+}
+.hero-brand-icon {
+    width: 72px;
+    height: 72px;
+    object-fit: contain;
+    border-radius: 18px;
+    filter: drop-shadow(0 8px 18px rgba(99, 102, 241, 0.18));
+}
+
 /* dashboard specific css */
 .sidebar { width: 260px; background: var(--bg-sidebar); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; justify-content: space-between; box-shadow: var(--shadow-sm); }
 .sidebar-top, .sidebar-bottom { padding: 16px; }
@@ -402,3 +441,7 @@ button, input, select { font-family: inherit; color: inherit; outline: none; }
 }
 .dashboard-admin-link:hover { border-color: var(--accent-primary); background: rgba(99,102,241,.05); }
 .top-nav-actions { display: flex; align-items: center; gap: 10px; }
+@media (max-width: 640px) {
+    .hero-brand-title { gap: 10px; }
+    .hero-brand-icon { width: 48px; height: 48px; border-radius: 12px; }
+}

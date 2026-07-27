@@ -4,17 +4,24 @@
 <head>
     <meta charset="UTF-8">
     <title>RAGdoll AI - Home</title>
-    <link rel="stylesheet" href="css/style.css?v=11">
+    <link rel="icon" type="image/png" href="images/ragdoll-icon.png">
+    <link rel="stylesheet" href="css/style.css?v=12">
 </head>
 <body class="landing-body">
     <nav class="landing-nav">
-        <a href="index.jsp" class="logo brand-home-link">RAGdoll</a>
+        <a href="index.jsp" class="logo brand-home-link brand-lockup" aria-label="RAGdoll home">
+            <img src="images/ragdoll-icon.png" alt="" class="brand-icon">
+            <span>RAGdoll</span>
+        </a>
         <a href="views/login.jsp" class="nav-login">Log in</a>
     </nav>
     
     <main class="hero-section">
         <div class="hero-content">
-            <h1>RAGdoll AI Assistant</h1>
+            <h1 class="hero-brand-title">
+                <img src="images/ragdoll-icon.png" alt="" class="hero-brand-icon">
+                <span>RAGdoll AI Assistant</span>
+            </h1>
             <p>A minimal, clean, and scalable RAG based AI hosting framework.</p>
             
             <div class="hero-actions">

@@ -4,14 +4,18 @@
 <head>
     <meta charset="UTF-8">
     <title>Login - RAGdoll AI</title>
-    <link rel="stylesheet" href="../css/style.css?v=11">
+    <link rel="icon" type="image/png" href="../images/ragdoll-icon.png">
+    <link rel="stylesheet" href="../css/style.css?v=12">
 </head>
 <body class="auth-body">
     <div class="auth-wrapper">
         <div class="auth-card">
             <div class="auth-header">
                 <h2>Welcome back</h2>
-                <p>Log in to your <a href="../index.jsp" class="brand-inline-link">RAGdoll</a> account</p>
+                <p>Log in to your <a href="../index.jsp" class="brand-inline-link brand-inline-lockup">
+                    <img src="../images/ragdoll-icon.png" alt="" class="brand-icon brand-icon-inline">
+                    <span>RAGdoll</span>
+                </a> account</p>
             </div>
             
             <form action="#" method="POST" class="auth-form">
