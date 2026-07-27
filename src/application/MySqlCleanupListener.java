@@ -17,11 +17,6 @@ import com.mysql.cj.jdbc.AbandonedConnectionCleanupThread;
 public class MySqlCleanupListener implements ServletContextListener {
 
     @Override
-    public void contextInitialized(ServletContextEvent event) {
-        // No startup work is required.
-    }
-
-    @Override
     public void contextDestroyed(ServletContextEvent event) {
         try {
             AbandonedConnectionCleanupThread.checkedShutdown();

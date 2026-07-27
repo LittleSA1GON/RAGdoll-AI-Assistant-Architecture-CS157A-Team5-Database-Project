@@ -503,6 +503,15 @@
             });
         }
 
+        async function apiJson(url, options, defaultError) {
+            const response = await fetch(url, options);
+            const result = await response.json().catch(function () { return {}; });
+            if (!response.ok) {
+                throw new Error(result.detail || defaultError);
+            }
+            return result;
+        }
+
         function setActiveConversation(conversationId) {
             document.querySelectorAll(".chat-item[data-conversation-id]").forEach(function (item) {
                 item.classList.toggle(
@@ -543,28 +552,13 @@
             inputHint.textContent = "Deleting conversation...";
 
             try {
-                const response = await fetch(
+                const result = await apiJson(
                     API_BASE_URL + "/api/conversations/" +
                     encodeURIComponent(conversationId) +
                     "?user_id=" + encodeURIComponent(CURRENT_USER_ID),
-                    {
-                        method: "DELETE",
-                        cache: "no-store"
-                    }
+                    { method: "DELETE", cache: "no-store" },
+                    "Unable to delete the conversation."
                 );
-
-                let result = {};
-                try {
-                    result = await response.json();
-                } catch (ignored) {
-                    result = {};
-                }
-
-                if (!response.ok) {
-                    throw new Error(
-                        result.detail || "Unable to delete the conversation."
-                    );
-                }
 
                 const deletedCurrentConversation =
                     Number(currentConversationId) === Number(conversationId);
@@ -593,14 +587,12 @@
 
         async function loadPastChats(activeConversationId) {
             try {
-                const response = await fetch(
-                    API_BASE_URL + "/api/conversations?user_id=" + encodeURIComponent(CURRENT_USER_ID),
-                    { cache: "no-store" }
+                const result = await apiJson(
+                    API_BASE_URL + "/api/conversations?user_id=" +
+                    encodeURIComponent(CURRENT_USER_ID),
+                    { cache: "no-store" },
+                    "Unable to load conversations."
                 );
-                const result = await response.json();
-                if (!response.ok) {
-                    throw new Error(result.detail || "Unable to load conversations.");
-                }
 
                 pastChatList.replaceChildren();
                 const conversations = Array.isArray(result.conversations)
@@ -674,15 +666,13 @@
             inputHint.textContent = "Loading saved conversation...";
 
             try {
-                const response = await fetch(
-                    API_BASE_URL + "/api/conversations/" + encodeURIComponent(conversationId) +
+                const result = await apiJson(
+                    API_BASE_URL + "/api/conversations/" +
+                    encodeURIComponent(conversationId) +
                     "?user_id=" + encodeURIComponent(CURRENT_USER_ID),
-                    { cache: "no-store" }
+                    { cache: "no-store" },
+                    "Unable to load the conversation."
                 );
-                const result = await response.json();
-                if (!response.ok) {
-                    throw new Error(result.detail || "Unable to load the conversation.");
-                }
 
                 currentConversationId = Number(result.conversation_id);
                 conversation.replaceChildren();
@@ -724,14 +714,11 @@
 
             for (let attempt = 1; attempt <= maximumAttempts; attempt += 1) {
                 try {
-                    const response = await fetch(API_BASE_URL + "/api/models", {
-                        cache: "no-store"
-                    });
-                    const result = await response.json();
-                    if (!response.ok) {
-                        throw new Error(result.detail || "Unable to load local models.");
-                    }
-                    return result;
+                    return await apiJson(
+                        API_BASE_URL + "/api/models",
+                        { cache: "no-store" },
+                        "Unable to load local models."
+                    );
                 } catch (error) {
                     lastError = error;
                     if (attempt < maximumAttempts) {
@@ -836,22 +823,15 @@
                     requestBody.model_id = Number(selectedOption.dataset.modelId);
                 }
 
-                const response = await fetch(API_BASE_URL + "/api/query", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(requestBody)
-                });
-
-                let result = {};
-                try {
-                    result = await response.json();
-                } catch (ignored) {
-                    result = {};
-                }
-
-                if (!response.ok) {
-                    throw new Error(result.detail || "The local model service returned an error.");
-                }
+                const result = await apiJson(
+                    API_BASE_URL + "/api/query",
+                    {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(requestBody)
+                    },
+                    "The local model service returned an error."
+                );
 
                 loadingMessage.remove();
                 addMessage(

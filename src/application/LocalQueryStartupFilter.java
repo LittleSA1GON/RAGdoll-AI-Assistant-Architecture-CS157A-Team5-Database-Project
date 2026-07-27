@@ -8,7 +8,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import javax.servlet.Filter;
@@ -18,13 +17,14 @@ import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 
-/**
- * Starts the local Python model API when the dashboard or admin page is requested.
- * Only one process is started for this deployed web application.
- */
+/** Starts the local Python model API on the first dashboard or admin request. */
 public class LocalQueryStartupFilter implements Filter {
 
     private static final Object PROCESS_LOCK = new Object();
+    private static final Path LOCAL_QUERY_SCRIPT = Paths.get(
+            "src", "rag_pipeline", "local_query.py"
+    );
+    private static final long STARTUP_TIMEOUT_MS = 45_000L;
     private static volatile Process localQueryProcess;
 
     private FilterConfig filterConfig;
@@ -34,44 +34,27 @@ public class LocalQueryStartupFilter implements Filter {
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
         this.filterConfig = filterConfig;
-        this.projectRoot = resolveProjectRoot(filterConfig);
-        this.healthUrl = getSetting(
+        projectRoot = resolveProjectRoot();
+        healthUrl = getSetting(
                 "RAGDOLL_API_HEALTH_URL",
                 "ragdoll.apiHealthUrl",
                 "http://127.0.0.1:8000/health"
         );
-
-        filterConfig.getServletContext().log(
-                "RAGdoll local-query project root: " + projectRoot.toString()
-        );
+        log("RAGdoll local-query project root: " + projectRoot);
     }
 
     @Override
-    public void doFilter(
-            ServletRequest request,
-            ServletResponse response,
-            FilterChain chain
-    ) throws IOException, ServletException {
-
+    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
+            throws IOException, ServletException {
         try {
             ensureLocalQueryRunning();
         } catch (Exception error) {
-            /*
-             * Allow the JSP page to load even if Python fails to start.
-             * The page will display a connection error to the user.
-             */
-            filterConfig.getServletContext().log(
-                    "Unable to start the RAGdoll local model API automatically.",
-                    error
-            );
+            log("Unable to start the RAGdoll local model API automatically.", error);
         }
-
         chain.doFilter(request, response);
     }
 
-    private void ensureLocalQueryRunning()
-            throws IOException, InterruptedException {
-
+    private void ensureLocalQueryRunning() throws IOException, InterruptedException {
         if (isServiceHealthy()) {
             return;
         }
@@ -80,75 +63,43 @@ public class LocalQueryStartupFilter implements Filter {
             if (isServiceHealthy()) {
                 return;
             }
-
             if (localQueryProcess != null && localQueryProcess.isAlive()) {
-                waitForService(45000L);
+                waitForService(STARTUP_TIMEOUT_MS);
                 return;
             }
 
-            Path scriptPath = projectRoot
-                    .resolve("src")
-                    .resolve("rag_pipeline")
-                    .resolve("local_query.py");
-
+            Path scriptPath = projectRoot.resolve(LOCAL_QUERY_SCRIPT);
             if (!Files.isRegularFile(scriptPath)) {
-                throw new IOException(
-                        "local_query.py was not found at " + scriptPath
-                );
+                throw new IOException("local_query.py was not found at " + scriptPath);
             }
 
-            List<String> command =
-                    new ArrayList<String>(findPythonCommand());
-
-            // -B prevents Python from creating __pycache__ directories or .pyc files.
+            List<String> command = new ArrayList<>(findPythonCommand());
             command.add("-B");
             command.add(scriptPath.toString());
 
             Path logDirectory = projectRoot.resolve("logs");
             Files.createDirectories(logDirectory);
+            File logFile = logDirectory.resolve("local_query.log").toFile();
 
-            File logFile = logDirectory
-                    .resolve("local_query.log")
-                    .toFile();
+            ProcessBuilder builder = new ProcessBuilder(command)
+                    .directory(projectRoot.toFile())
+                    .redirectErrorStream(true)
+                    .redirectOutput(ProcessBuilder.Redirect.appendTo(logFile));
+            builder.environment().put("PYTHONUNBUFFERED", "1");
+            builder.environment().put("PYTHONDONTWRITEBYTECODE", "1");
 
-            ProcessBuilder processBuilder = new ProcessBuilder(command);
-
-            processBuilder.directory(projectRoot.toFile());
-            processBuilder.redirectErrorStream(true);
-            processBuilder.redirectOutput(
-                    ProcessBuilder.Redirect.appendTo(logFile)
-            );
-
-            processBuilder.environment().put(
-                    "PYTHONUNBUFFERED",
-                    "1"
-            );
-            processBuilder.environment().put(
-                    "PYTHONDONTWRITEBYTECODE",
-                    "1"
-            );
-
-            localQueryProcess = processBuilder.start();
-
-            filterConfig.getServletContext().log(
-                    "Started RAGdoll local model API. Output: "
-                            + logFile.getAbsolutePath()
-            );
-
-            waitForService(45000L);
+            localQueryProcess = builder.start();
+            log("Started RAGdoll local model API. Output: " + logFile.getAbsolutePath());
+            waitForService(STARTUP_TIMEOUT_MS);
         }
     }
 
-    private void waitForService(long timeoutMilliseconds)
-            throws IOException, InterruptedException {
-
-        long deadline = System.currentTimeMillis() + timeoutMilliseconds;
-
+    private void waitForService(long timeoutMs) throws IOException, InterruptedException {
+        long deadline = System.currentTimeMillis() + timeoutMs;
         while (System.currentTimeMillis() < deadline) {
             if (isServiceHealthy()) {
                 return;
             }
-
             if (localQueryProcess != null && !localQueryProcess.isAlive()) {
                 throw new IOException(
                         "The local RAG API process exited with code "
@@ -156,35 +107,26 @@ public class LocalQueryStartupFilter implements Filter {
                                 + ". Check logs/local_query.log."
                 );
             }
-
             Thread.sleep(250L);
         }
-
         throw new IOException(
                 "The local RAG API did not become healthy within "
-                        + (timeoutMilliseconds / 1000L)
+                        + (timeoutMs / 1000L)
                         + " seconds. Check logs/local_query.log."
         );
     }
 
     private boolean isServiceHealthy() {
         HttpURLConnection connection = null;
-
         try {
-            connection = (HttpURLConnection)
-                    new URL(healthUrl).openConnection();
-
+            connection = (HttpURLConnection) new URL(healthUrl).openConnection();
             connection.setRequestMethod("GET");
             connection.setConnectTimeout(500);
             connection.setReadTimeout(500);
             connection.setUseCaches(false);
-
-            return connection.getResponseCode()
-                    == HttpURLConnection.HTTP_OK;
-
+            return connection.getResponseCode() == HttpURLConnection.HTTP_OK;
         } catch (IOException ignored) {
             return false;
-
         } finally {
             if (connection != null) {
                 connection.disconnect();
@@ -192,206 +134,131 @@ public class LocalQueryStartupFilter implements Filter {
         }
     }
 
-    private List<String> findPythonCommand()
-            throws IOException, InterruptedException {
+    private List<String> findPythonCommand() throws IOException, InterruptedException {
+        boolean windows = System.getProperty("os.name", "").toLowerCase().contains("win");
+        List<List<String>> candidates = new ArrayList<>();
 
-        boolean windows = System.getProperty("os.name", "")
-                .toLowerCase()
-                .contains("win");
+        String configuredPython = getSetting("RAGDOLL_PYTHON", "ragdoll.python", null);
+        if (configuredPython != null) {
+            candidates.add(List.of(configuredPython));
+        }
 
-        List<List<String>> candidates =
-                new ArrayList<List<String>>();
-
-        String configuredPython = getSetting(
-                "RAGDOLL_PYTHON",
-                "ragdoll.python",
-                null
+        Path virtualEnvironmentPython = projectRoot.resolve(
+                windows ? Paths.get(".venv", "Scripts", "python.exe")
+                        : Paths.get(".venv", "bin", "python")
         );
-
-        if (configuredPython != null
-                && !configuredPython.trim().isEmpty()) {
-            candidates.add(Arrays.asList(configuredPython));
-        }
-
-        Path virtualEnvironmentPython = windows
-                ? projectRoot.resolve(".venv").resolve("Scripts").resolve("python.exe")
-                : projectRoot.resolve(".venv").resolve("bin").resolve("python");
-
         if (Files.isRegularFile(virtualEnvironmentPython)) {
-            candidates.add(Arrays.asList(virtualEnvironmentPython.toString()));
+            candidates.add(List.of(virtualEnvironmentPython.toString()));
         }
 
-        if (windows) {
-            candidates.add(Arrays.asList("py", "-3"));
-            candidates.add(Arrays.asList("python"));
-        } else {
-            candidates.add(Arrays.asList("python3"));
-            candidates.add(Arrays.asList("python"));
-        }
+        candidates.add(windows ? List.of("py", "-3") : List.of("python3"));
+        candidates.add(List.of("python"));
 
         for (List<String> candidate : candidates) {
-            List<String> testCommand =
-                    new ArrayList<String>(candidate);
-
+            List<String> testCommand = new ArrayList<>(candidate);
             testCommand.add("--version");
-
             try {
-                Process testProcess =
-                        new ProcessBuilder(testCommand)
-                                .redirectErrorStream(true)
-                                .start();
-
-                int exitCode = testProcess.waitFor();
-
-                if (exitCode == 0) {
+                Process process = new ProcessBuilder(testCommand)
+                        .redirectErrorStream(true)
+                        .start();
+                if (process.waitFor() == 0) {
                     return candidate;
                 }
-
             } catch (IOException ignored) {
-                // Try the next Python command.
+                // Try the next candidate.
             }
         }
 
         throw new IOException(
-                "Python 3 was not found. Create a .venv in the project, "
-                        + "set RAGDOLL_PYTHON, or make sure py, python3, "
-                        + "or python is on PATH."
+                "Python 3 was not found. Create a .venv in the project, set "
+                        + "RAGDOLL_PYTHON, or make sure py, python3, or python is on PATH."
         );
     }
 
-    private Path resolveProjectRoot(FilterConfig config)
-            throws ServletException {
-
+    private Path resolveProjectRoot() throws ServletException {
         String configuredRoot = getSetting(
-                "RAGDOLL_PROJECT_ROOT",
-                "ragdoll.projectRoot",
-                null
+                "RAGDOLL_PROJECT_ROOT", "ragdoll.projectRoot", null
         );
-
-        if (configuredRoot != null
-                && !configuredRoot.trim().isEmpty()) {
-
-            Path configuredPath = Paths
-                    .get(configuredRoot)
-                    .toAbsolutePath()
-                    .normalize();
-
+        if (configuredRoot != null) {
+            Path configuredPath = normalizedPath(configuredRoot);
             if (containsLocalQuery(configuredPath)) {
                 return configuredPath;
             }
-
             throw new ServletException(
-                    "RAGDOLL_PROJECT_ROOT does not contain "
-                            + "src/rag_pipeline/local_query.py: "
+                    "RAGDOLL_PROJECT_ROOT does not contain src/rag_pipeline/local_query.py: "
                             + configuredPath
             );
         }
 
-        String realPath =
-                config.getServletContext().getRealPath("/");
-
+        String realPath = filterConfig.getServletContext().getRealPath("/");
         if (realPath != null) {
-            Path discovered = findProjectRoot(
-                    Paths.get(realPath)
-                            .toAbsolutePath()
-                            .normalize(),
-                    6
-            );
-
+            Path discovered = findProjectRoot(normalizedPath(realPath), 6);
             if (discovered != null) {
                 return discovered;
             }
         }
 
-        Path workingDirectory = Paths
-                .get(System.getProperty("user.dir", "."))
-                .toAbsolutePath()
-                .normalize();
-
         Path discovered = findProjectRoot(
-                workingDirectory,
-                8
+                normalizedPath(System.getProperty("user.dir", ".")), 8
         );
-
         if (discovered != null) {
             return discovered;
         }
 
         throw new ServletException(
-                "Could not locate src/rag_pipeline/local_query.py. "
-                        + "Set the RAGDOLL_PROJECT_ROOT environment "
-                        + "variable to the project folder."
+                "Could not locate src/rag_pipeline/local_query.py. Set the "
+                        + "RAGDOLL_PROJECT_ROOT environment variable to the project folder."
         );
     }
 
-    private Path findProjectRoot(
-            Path start,
-            int maximumParents
-    ) {
+    private Path findProjectRoot(Path start, int maximumParents) {
         Path current = start;
-
-        for (int index = 0;
-             current != null && index <= maximumParents;
-             index++) {
-
+        for (int index = 0; current != null && index <= maximumParents; index++) {
             if (containsLocalQuery(current)) {
                 return current;
             }
-
             current = current.getParent();
         }
-
         return null;
     }
 
     private boolean containsLocalQuery(Path directory) {
-        return directory != null
-                && Files.isRegularFile(
-                        directory
-                                .resolve("src")
-                                .resolve("rag_pipeline")
-                                .resolve("local_query.py")
-                );
+        return directory != null && Files.isRegularFile(directory.resolve(LOCAL_QUERY_SCRIPT));
     }
 
-    private String getSetting(
-            String environmentName,
-            String contextName,
-            String defaultValue
-    ) {
-        String environmentValue =
-                System.getenv(environmentName);
+    private Path normalizedPath(String value) {
+        return Paths.get(value).toAbsolutePath().normalize();
+    }
 
-        if (environmentValue != null
-                && !environmentValue.trim().isEmpty()) {
-
-            return environmentValue.trim();
+    private String getSetting(String environmentName, String contextName, String defaultValue) {
+        String value = nonBlank(System.getenv(environmentName));
+        if (value != null) {
+            return value;
         }
-
-        String contextValue = filterConfig == null
+        value = filterConfig == null
                 ? null
-                : filterConfig
-                        .getServletContext()
-                        .getInitParameter(contextName);
+                : nonBlank(filterConfig.getServletContext().getInitParameter(contextName));
+        return value == null ? defaultValue : value;
+    }
 
-        if (contextValue != null
-                && !contextValue.trim().isEmpty()) {
+    private String nonBlank(String value) {
+        return value == null || value.trim().isEmpty() ? null : value.trim();
+    }
 
-            return contextValue.trim();
-        }
+    private void log(String message) {
+        filterConfig.getServletContext().log(message);
+    }
 
-        return defaultValue;
+    private void log(String message, Throwable error) {
+        filterConfig.getServletContext().log(message, error);
     }
 
     @Override
     public void destroy() {
         synchronized (PROCESS_LOCK) {
-            if (localQueryProcess != null
-                    && localQueryProcess.isAlive()) {
-
+            if (localQueryProcess != null && localQueryProcess.isAlive()) {
                 localQueryProcess.destroy();
             }
-
             localQueryProcess = null;
         }
     }

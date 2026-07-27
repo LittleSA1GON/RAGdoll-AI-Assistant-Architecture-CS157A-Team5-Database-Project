@@ -162,20 +162,152 @@ def _database_connection() -> Iterator[Any]:
         connection.close()
 
 
+ID_COLUMNS = {
+    "Conversations": "conversation_id",
+    "Queries": "query_id",
+    "Responses": "response_id",
+    "Documents": "document_id",
+    "Chunks": "chunk_id",
+    "Audit_Log": "log_id",
+}
+
+MODEL_COMPAT_COLUMNS = {
+    "is_available": "TINYINT(1) NOT NULL DEFAULT 0 AFTER is_enabled",
+}
+DOCUMENT_COMPAT_COLUMNS = {
+    "file_path": "VARCHAR(255) NULL AFTER file_type",
+    "processing_status": "VARCHAR(20) NOT NULL DEFAULT 'uploaded' AFTER file_path",
+    "processing_error": "TEXT NULL AFTER processing_status",
+    "rag_access_scope": (
+        "VARCHAR(20) NOT NULL DEFAULT 'all_users' AFTER processing_error"
+    ),
+}
+CHUNK_COMPAT_COLUMNS = {
+    "embedding_model": "VARCHAR(150) NULL AFTER embedding_vector",
+    "embedding_dimension": "INT NULL AFTER embedding_model",
+    "embedded_at": "DATETIME NULL AFTER embedding_dimension",
+}
+QUERY_COMPAT_COLUMNS = {
+    "embedding_model": "VARCHAR(150) NULL AFTER embedding_vector",
+    "embedding_dimension": "INT NULL AFTER embedding_model",
+    "rag_eligible": "TINYINT(1) NOT NULL DEFAULT 1 AFTER embedding_dimension",
+}
+RETRIEVE_COMPAT_COLUMNS = {
+    "similarity_score": "DECIMAL(8,6) NULL AFTER chunk_id",
+}
+
+
+def _next_id(cursor: Any, table: str) -> int:
+    column = ID_COLUMNS.get(table)
+    if column is None:
+        raise ValueError(f"Unsupported ID sequence: {table}.")
+    cursor.execute(
+        f"SELECT COALESCE(MAX({column}), 0) + 1 AS next_id FROM {table}"
+    )
+    return int(cursor.fetchone()["next_id"])
+
+
+def _ensure_columns(cursor: Any, table: str, required: Dict[str, str]) -> None:
+    cursor.execute(f"SHOW COLUMNS FROM {table}")
+    present = {str(row["Field"]) for row in cursor.fetchall()}
+    for column, definition in required.items():
+        if column not in present:
+            cursor.execute(f"ALTER TABLE {table} ADD COLUMN {column} {definition}")
+
+
+def _verify_admin(cursor: Any, admin_user_id: int) -> None:
+    cursor.execute("SELECT user_id FROM Admins WHERE user_id = %s", (admin_user_id,))
+    if cursor.fetchone() is None:
+        raise PermissionError(f"User {admin_user_id} is not an administrator.")
+
+
+def _ensure_demo_user(
+    cursor: Any,
+    *,
+    user_id: int,
+    username: str,
+    email: str,
+    tier_name: str,
+    legacy_email_template: str,
+) -> None:
+    """Upsert a demo user and move conflicting legacy identities aside."""
+
+    cursor.execute(
+        """
+        SELECT user_id
+        FROM Users
+        WHERE (username = %s OR email = %s)
+          AND user_id <> %s
+        ORDER BY user_id
+        """,
+        (username, email, user_id),
+    )
+    for legacy_user in cursor.fetchall():
+        legacy_user_id = int(legacy_user["user_id"])
+        cursor.execute(
+            """
+            UPDATE Users
+            SET username = %s, email = %s
+            WHERE user_id = %s
+            """,
+            (
+                f"{username}_legacy_{legacy_user_id}",
+                legacy_email_template.format(user_id=legacy_user_id),
+                legacy_user_id,
+            ),
+        )
+
+    cursor.execute(
+        """
+        INSERT INTO Users (user_id, username, email, created_at)
+        VALUES (%s, %s, %s, NOW())
+        ON DUPLICATE KEY UPDATE
+            username = VALUES(username),
+            email = VALUES(email)
+        """,
+        (user_id, username, email),
+    )
+    cursor.execute(
+        """
+        INSERT INTO User_Hashes (user_id, password_hash, salt)
+        VALUES (
+            %s,
+            SHA2(CONCAT(%s, '_password_', %s), 256),
+            CONCAT('salt_', %s, '_', %s)
+        )
+        ON DUPLICATE KEY UPDATE
+            password_hash = VALUES(password_hash),
+            salt = VALUES(salt)
+        """,
+        (user_id, username, user_id, username, user_id),
+    )
+    cursor.execute(
+        """
+        SELECT tier_id
+        FROM Tiers
+        WHERE LOWER(tier_name) = LOWER(%s)
+        ORDER BY tier_id
+        LIMIT 1
+        """,
+        (tier_name,),
+    )
+    tier = cursor.fetchone()
+    if tier is not None:
+        cursor.execute(
+            """
+            INSERT IGNORE INTO Has (user_id, tier_id, assigned_at)
+            VALUES (%s, %s, NOW())
+            """,
+            (user_id, int(tier["tier_id"])),
+        )
+
+
 class ModelDatabase:
     """MySQL adapter for local model metadata and availability."""
 
     @staticmethod
     def _ensure_availability_column(cursor: Any) -> None:
-        cursor.execute("SHOW COLUMNS FROM Models LIKE 'is_available'")
-        if cursor.fetchone() is None:
-            cursor.execute(
-                """
-                ALTER TABLE Models
-                ADD COLUMN is_available TINYINT(1) NOT NULL DEFAULT 0
-                AFTER is_enabled
-                """
-            )
+        _ensure_columns(cursor, "Models", MODEL_COMPAT_COLUMNS)
 
     @staticmethod
     def _get_free_tier_id(cursor: Any) -> int:
@@ -326,89 +458,14 @@ class ConversationDatabase:
     def _ensure_default_user_records(cursor: Any) -> None:
         """Create the temporary John Roblox account with user_id 0."""
 
-        # Older project copies used user_id 21 for the same demo username.
-        # Rename that legacy row first so the unique username/email constraints
-        # do not prevent the new temporary user_id 0 row from being created.
-        cursor.execute(
-            """
-            SELECT user_id
-            FROM Users
-            WHERE (username = %s OR email = %s)
-              AND user_id <> %s
-            ORDER BY user_id
-            LIMIT 1
-            """,
-            (DEFAULT_USERNAME, DEFAULT_USER_EMAIL, DEFAULT_USER_ID),
+        _ensure_demo_user(
+            cursor,
+            user_id=DEFAULT_USER_ID,
+            username=DEFAULT_USERNAME,
+            email=DEFAULT_USER_EMAIL,
+            tier_name="free",
+            legacy_email_template="john.roblox.legacy.{user_id}@ragdoll.local",
         )
-        legacy_user = cursor.fetchone()
-        if legacy_user is not None:
-            legacy_user_id = int(legacy_user["user_id"])
-            cursor.execute(
-                """
-                UPDATE Users
-                SET username = %s,
-                    email = %s
-                WHERE user_id = %s
-                """,
-                (
-                    f"{DEFAULT_USERNAME}_legacy_{legacy_user_id}",
-                    f"john.roblox.legacy.{legacy_user_id}@ragdoll.local",
-                    legacy_user_id,
-                ),
-            )
-
-        cursor.execute(
-            """
-            INSERT INTO Users (user_id, username, email, created_at)
-            VALUES (%s, %s, %s, NOW())
-            ON DUPLICATE KEY UPDATE
-                username = VALUES(username),
-                email = VALUES(email)
-            """,
-            (DEFAULT_USER_ID, DEFAULT_USERNAME, DEFAULT_USER_EMAIL),
-        )
-
-        # Keep the same demo-hash format used by database.sql. Authentication is
-        # not yet connected, but this makes John a complete Users/User_Hashes row.
-        cursor.execute(
-            """
-            INSERT INTO User_Hashes (user_id, password_hash, salt)
-            VALUES (
-                %s,
-                SHA2(CONCAT(%s, '_password_', %s), 256),
-                CONCAT('salt_', %s, '_', %s)
-            )
-            ON DUPLICATE KEY UPDATE
-                password_hash = VALUES(password_hash),
-                salt = VALUES(salt)
-            """,
-            (
-                DEFAULT_USER_ID,
-                DEFAULT_USERNAME,
-                DEFAULT_USER_ID,
-                DEFAULT_USERNAME,
-                DEFAULT_USER_ID,
-            ),
-        )
-
-        cursor.execute(
-            """
-            SELECT tier_id
-            FROM Tiers
-            WHERE LOWER(tier_name) = 'free'
-            ORDER BY tier_id
-            LIMIT 1
-            """
-        )
-        free_tier = cursor.fetchone()
-        if free_tier is not None:
-            cursor.execute(
-                """
-                INSERT IGNORE INTO Has (user_id, tier_id, assigned_at)
-                VALUES (%s, %s, NOW())
-                """,
-                (DEFAULT_USER_ID, int(free_tier["tier_id"])),
-            )
 
     def ensure_default_user(self) -> None:
         """Persist John Roblox before the dashboard reads or writes history."""
@@ -423,20 +480,6 @@ class ConversationDatabase:
                 raise
             finally:
                 cursor.close()
-
-    @staticmethod
-    def _next_id(cursor: Any, table_name: str, column_name: str) -> int:
-        allowed = {
-            ("Conversations", "conversation_id"),
-            ("Queries", "query_id"),
-            ("Responses", "response_id"),
-        }
-        if (table_name, column_name) not in allowed:
-            raise ValueError("Unsupported ID sequence.")
-        cursor.execute(
-            f"SELECT COALESCE(MAX({column_name}), 0) + 1 AS next_id FROM {table_name}"
-        )
-        return int(cursor.fetchone()["next_id"])
 
     @staticmethod
     def _title_from_query(query_text: str) -> str:
@@ -711,26 +754,8 @@ class ConversationDatabase:
 
     @staticmethod
     def _ensure_query_embedding_columns(cursor: Any) -> None:
-        """Keep embedding metadata compatible with older local databases."""
-
-        cursor.execute("SHOW COLUMNS FROM Queries")
-        query_columns = {str(row["Field"]) for row in cursor.fetchall()}
-        query_required = {
-            "embedding_model": "VARCHAR(150) NULL AFTER embedding_vector",
-            "embedding_dimension": "INT NULL AFTER embedding_model",
-            "rag_eligible": "TINYINT(1) NOT NULL DEFAULT 1 AFTER embedding_dimension",
-        }
-        for column, definition in query_required.items():
-            if column not in query_columns:
-                cursor.execute(f"ALTER TABLE Queries ADD COLUMN {column} {definition}")
-
-        cursor.execute("SHOW COLUMNS FROM Retrieves")
-        retrieve_columns = {str(row["Field"]) for row in cursor.fetchall()}
-        if "similarity_score" not in retrieve_columns:
-            cursor.execute(
-                "ALTER TABLE Retrieves "
-                "ADD COLUMN similarity_score DECIMAL(8,6) NULL AFTER chunk_id"
-            )
+        _ensure_columns(cursor, "Queries", QUERY_COMPAT_COLUMNS)
+        _ensure_columns(cursor, "Retrieves", RETRIEVE_COMPAT_COLUMNS)
 
     def save_turn(
         self,
@@ -756,9 +781,7 @@ class ConversationDatabase:
                     self._verify_user(cursor, user_id)
 
                     if conversation_id is None:
-                        conversation_id = self._next_id(
-                            cursor, "Conversations", "conversation_id"
-                        )
+                        conversation_id = _next_id(cursor, "Conversations")
                         cursor.execute(
                             """
                             INSERT INTO Conversations
@@ -781,8 +804,8 @@ class ConversationDatabase:
                     else:
                         self._verify_conversation(cursor, conversation_id, user_id)
 
-                    query_id = self._next_id(cursor, "Queries", "query_id")
-                    response_id = self._next_id(cursor, "Responses", "response_id")
+                    query_id = _next_id(cursor, "Queries")
+                    response_id = _next_id(cursor, "Responses")
 
                     embedding_values = query_embedding or []
                     cursor.execute(
@@ -876,21 +899,7 @@ class DocumentDatabase:
 
     @staticmethod
     def _ensure_document_columns(cursor: Any) -> None:
-        required = {
-            "file_path": "VARCHAR(255) NULL AFTER file_type",
-            "processing_status": (
-                "VARCHAR(20) NOT NULL DEFAULT 'uploaded' AFTER file_path"
-            ),
-            "processing_error": "TEXT NULL AFTER processing_status",
-            "rag_access_scope": (
-                "VARCHAR(20) NOT NULL DEFAULT 'all_users' AFTER processing_error"
-            ),
-        }
-        cursor.execute("SHOW COLUMNS FROM Documents")
-        present = {str(row["Field"]) for row in cursor.fetchall()}
-        for column, definition in required.items():
-            if column not in present:
-                cursor.execute(f"ALTER TABLE Documents ADD COLUMN {column} {definition}")
+        _ensure_columns(cursor, "Documents", DOCUMENT_COMPAT_COLUMNS)
         cursor.execute(
             "UPDATE Documents SET rag_access_scope = %s "
             "WHERE rag_access_scope IS NULL OR rag_access_scope = ''",
@@ -899,58 +908,22 @@ class DocumentDatabase:
 
     @staticmethod
     def _ensure_chunk_embedding_columns(cursor: Any) -> None:
-        """Add embedding provenance columns when an older schema is in use."""
-
-        cursor.execute("SHOW COLUMNS FROM Chunks")
-        present = {str(row["Field"]) for row in cursor.fetchall()}
-        required = {
-            "embedding_model": "VARCHAR(150) NULL AFTER embedding_vector",
-            "embedding_dimension": "INT NULL AFTER embedding_model",
-            "embedded_at": "DATETIME NULL AFTER embedding_dimension",
-        }
-        for column, definition in required.items():
-            if column not in present:
-                cursor.execute(f"ALTER TABLE Chunks ADD COLUMN {column} {definition}")
+        _ensure_columns(cursor, "Chunks", CHUNK_COMPAT_COLUMNS)
 
     @staticmethod
     def _ensure_default_admin_records(cursor: Any) -> None:
-        """Create or repair the temporary Jane administrator identity.
+        """Create or repair the temporary Jane administrator identity."""
 
-        This keeps older local databases compatible with the JSP demo login.
-        It runs only for the configured temporary administrator ID.
-        """
-
-        # Free the desired username/email if an older seed placed Jane on a
-        # different user ID. Preserve those rows under deterministic legacy
-        # values rather than deleting any existing data.
-        cursor.execute(
-            """
-            SELECT user_id
-            FROM Users
-            WHERE (username = %s OR email = %s)
-              AND user_id <> %s
-            ORDER BY user_id
-            """,
-            (
-                DEFAULT_ADMIN_USERNAME,
-                DEFAULT_ADMIN_EMAIL,
-                DEFAULT_ADMIN_USER_ID,
+        _ensure_demo_user(
+            cursor,
+            user_id=DEFAULT_ADMIN_USER_ID,
+            username=DEFAULT_ADMIN_USERNAME,
+            email=DEFAULT_ADMIN_EMAIL,
+            tier_name="admin access",
+            legacy_email_template=(
+                "jane.fortnite.legacy.{user_id}@ragdoll.local"
             ),
         )
-        for legacy_user in cursor.fetchall():
-            legacy_user_id = int(legacy_user["user_id"])
-            cursor.execute(
-                """
-                UPDATE Users
-                SET username = %s, email = %s
-                WHERE user_id = %s
-                """,
-                (
-                    f"{DEFAULT_ADMIN_USERNAME}_legacy_{legacy_user_id}",
-                    f"jane.fortnite.legacy.{legacy_user_id}@ragdoll.local",
-                    legacy_user_id,
-                ),
-            )
 
         cursor.execute(
             """
@@ -978,42 +951,6 @@ class DocumentDatabase:
 
         cursor.execute(
             """
-            INSERT INTO Users (user_id, username, email, created_at)
-            VALUES (%s, %s, %s, NOW())
-            ON DUPLICATE KEY UPDATE
-                username = VALUES(username),
-                email = VALUES(email)
-            """,
-            (
-                DEFAULT_ADMIN_USER_ID,
-                DEFAULT_ADMIN_USERNAME,
-                DEFAULT_ADMIN_EMAIL,
-            ),
-        )
-
-        cursor.execute(
-            """
-            INSERT INTO User_Hashes (user_id, password_hash, salt)
-            VALUES (
-                %s,
-                SHA2(CONCAT(%s, '_password_', %s), 256),
-                CONCAT('salt_', %s, '_', %s)
-            )
-            ON DUPLICATE KEY UPDATE
-                password_hash = VALUES(password_hash),
-                salt = VALUES(salt)
-            """,
-            (
-                DEFAULT_ADMIN_USER_ID,
-                DEFAULT_ADMIN_USERNAME,
-                DEFAULT_ADMIN_USER_ID,
-                DEFAULT_ADMIN_USERNAME,
-                DEFAULT_ADMIN_USER_ID,
-            ),
-        )
-
-        cursor.execute(
-            """
             INSERT INTO Admins (user_id, company_id, admin_email)
             VALUES (%s, %s, %s)
             ON DUPLICATE KEY UPDATE
@@ -1026,25 +963,6 @@ class DocumentDatabase:
                 DEFAULT_ADMIN_EMAIL,
             ),
         )
-
-        cursor.execute(
-            """
-            SELECT tier_id
-            FROM Tiers
-            WHERE LOWER(tier_name) = 'admin access'
-            ORDER BY tier_id
-            LIMIT 1
-            """
-        )
-        admin_tier = cursor.fetchone()
-        if admin_tier is not None:
-            cursor.execute(
-                """
-                INSERT IGNORE INTO Has (user_id, tier_id, assigned_at)
-                VALUES (%s, %s, NOW())
-                """,
-                (DEFAULT_ADMIN_USER_ID, int(admin_tier["tier_id"])),
-            )
 
     def ensure_admin_identity(self, admin_user_id: int) -> None:
         """Repair the configured temporary administrator automatically."""
@@ -1064,28 +982,6 @@ class DocumentDatabase:
                 finally:
                     cursor.close()
 
-    @staticmethod
-    def _verify_admin(cursor: Any, admin_user_id: int) -> None:
-        cursor.execute(
-            "SELECT user_id FROM Admins WHERE user_id = %s",
-            (admin_user_id,),
-        )
-        if cursor.fetchone() is None:
-            raise PermissionError(f"User {admin_user_id} is not an administrator.")
-
-    @staticmethod
-    def _next_id(cursor: Any, table: str, column: str) -> int:
-        allowed = {
-            ("Documents", "document_id"),
-            ("Chunks", "chunk_id"),
-        }
-        if (table, column) not in allowed:
-            raise ValueError("Unsupported document ID sequence.")
-        cursor.execute(
-            f"SELECT COALESCE(MAX({column}), 0) + 1 AS next_id FROM {table}"
-        )
-        return int(cursor.fetchone()["next_id"])
-
     def begin_document(
         self,
         admin_user_id: int,
@@ -1098,8 +994,8 @@ class DocumentDatabase:
                 cursor = connection.cursor(dictionary=True)
                 try:
                     self._ensure_document_columns(cursor)
-                    self._verify_admin(cursor, admin_user_id)
-                    document_id = self._next_id(cursor, "Documents", "document_id")
+                    _verify_admin(cursor, admin_user_id)
+                    document_id = _next_id(cursor, "Documents")
                     cursor.execute(
                         """
                         INSERT INTO Documents
@@ -1162,7 +1058,7 @@ class DocumentDatabase:
                 cursor = connection.cursor(dictionary=True)
                 try:
                     self._ensure_chunk_embedding_columns(cursor)
-                    next_chunk_id = self._next_id(cursor, "Chunks", "chunk_id")
+                    next_chunk_id = _next_id(cursor, "Chunks")
                     for offset, (chunk_text, vector) in enumerate(
                         zip(chunks, embeddings)
                     ):
@@ -1230,7 +1126,7 @@ class DocumentDatabase:
             cursor = connection.cursor(dictionary=True)
             self._ensure_document_columns(cursor)
             self._ensure_chunk_embedding_columns(cursor)
-            self._verify_admin(cursor, admin_user_id)
+            _verify_admin(cursor, admin_user_id)
             cursor.execute(
                 """
                 SELECT d.document_id,
@@ -1264,7 +1160,7 @@ class DocumentDatabase:
             cursor = connection.cursor(dictionary=True)
             try:
                 self._ensure_document_columns(cursor)
-                self._verify_admin(cursor, admin_user_id)
+                _verify_admin(cursor, admin_user_id)
                 cursor.execute(
                     """
                     SELECT d.document_id,
@@ -1305,7 +1201,7 @@ class DocumentDatabase:
                 cursor = connection.cursor(dictionary=True)
                 try:
                     self._ensure_document_columns(cursor)
-                    self._verify_admin(cursor, admin_user_id)
+                    _verify_admin(cursor, admin_user_id)
                     cursor.execute(
                         """
                         SELECT d.document_id, d.file_name, d.file_path
@@ -1537,25 +1433,13 @@ class AdminControlDatabase:
     """Administration queries for tiers, remembered models, and audit logs."""
 
     @staticmethod
-    def _verify_admin(cursor: Any, admin_user_id: int) -> None:
-        cursor.execute(
-            "SELECT user_id FROM Admins WHERE user_id = %s",
-            (admin_user_id,),
-        )
-        if cursor.fetchone() is None:
-            raise PermissionError(f"User {admin_user_id} is not an administrator.")
-
-    @staticmethod
     def _insert_audit(
         cursor: Any,
         user_id: int,
         action_log: str,
         action_type: str,
     ) -> int:
-        cursor.execute(
-            "SELECT COALESCE(MAX(log_id), 0) + 1 AS next_id FROM Audit_Log"
-        )
-        log_id = int(cursor.fetchone()["next_id"])
+        log_id = _next_id(cursor, "Audit_Log")
         cursor.execute(
             """
             INSERT INTO Audit_Log
@@ -1580,7 +1464,7 @@ class AdminControlDatabase:
         with _database_connection() as connection:
             cursor = connection.cursor(dictionary=True)
             try:
-                self._verify_admin(cursor, admin_user_id)
+                _verify_admin(cursor, admin_user_id)
                 MODEL_DATABASE._ensure_availability_column(cursor)
 
                 cursor.execute(
@@ -1658,7 +1542,7 @@ class AdminControlDatabase:
             with _database_connection() as connection:
                 cursor = connection.cursor(dictionary=True)
                 try:
-                    self._verify_admin(cursor, admin_user_id)
+                    _verify_admin(cursor, admin_user_id)
                     cursor.execute(
                         "SELECT tier_id, tier_name FROM Tiers WHERE tier_id = %s",
                         (tier_id,),
@@ -1727,7 +1611,7 @@ class AdminControlDatabase:
         with _database_connection() as connection:
             cursor = connection.cursor(dictionary=True)
             try:
-                self._verify_admin(cursor, admin_user_id)
+                _verify_admin(cursor, admin_user_id)
                 cursor.execute(
                     """
                     SELECT a.log_id,
@@ -1769,7 +1653,7 @@ class AdminControlDatabase:
             with _database_connection() as connection:
                 cursor = connection.cursor(dictionary=True)
                 try:
-                    self._verify_admin(cursor, admin_user_id)
+                    _verify_admin(cursor, admin_user_id)
                     self._insert_audit(
                         cursor, admin_user_id, action_log, action_type
                     )
