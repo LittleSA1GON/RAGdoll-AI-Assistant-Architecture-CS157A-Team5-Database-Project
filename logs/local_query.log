@@ -367,3 +367,127 @@ INFO:     127.0.0.1:61196 - "POST /api/query HTTP/1.1" 200 OK
 INFO:     127.0.0.1:61196 - "GET /api/conversations?user_id=0 HTTP/1.1" 200 OK
 INFO:     127.0.0.1:57192 - "POST /api/query HTTP/1.1" 200 OK
 INFO:     127.0.0.1:57192 - "GET /api/conversations?user_id=0 HTTP/1.1" 200 OK
+E:\Software Engineering Stuff\CS 157A\RAGdoll-AI-Assistant-Architecture-CS157A-Team5-Database-Project\src\rag_pipeline\local_query.py:2052: DeprecationWarning: 
+        on_event is deprecated, use lifespan event handlers instead.
+
+        Read more about it in the
+        [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+        
+  @app.on_event("startup")
+INFO:     Started server process [35236]
+INFO:     Waiting for application startup.
+Temporary administrator 20 is ready in MySQL.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:61318 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61320 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61322 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55442 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55442 - "GET /api/conversations?user_id=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62538 - "GET /api/conversations/1?user_id=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62538 - "OPTIONS /api/conversations/1?user_id=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62538 - "DELETE /api/conversations/1?user_id=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62538 - "GET /api/conversations?user_id=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62538 - "OPTIONS /api/query HTTP/1.1" 200 OK
+llama_kv_cache_iswa: using full-size SWA cache (ref: https://github.com/ggml-org/llama.cpp/pull/13194#issuecomment-2868343055)
+INFO:     127.0.0.1:62538 - "POST /api/query HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62538 - "GET /api/conversations?user_id=0 HTTP/1.1" 200 OK
+Loading weights:   0%|          | 0/199 [00:00<?, ?it/s]Loading weights:  23%|##3       | 46/199 [00:00<00:00, 459.44it/s]Loading weights:  46%|####6     | 92/199 [00:00<00:00, 408.86it/s]Loading weights:  68%|######8   | 136/199 [00:00<00:00, 409.47it/s]Loading weights:  89%|########9 | 178/199 [00:00<00:00, 408.41it/s]Loading weights: 100%|##########| 199/199 [00:00<00:00, 428.43it/s]
+INFO:     127.0.0.1:62588 - "POST /api/query HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62588 - "GET /api/conversations?user_id=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53213 - "POST /api/query HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53213 - "GET /api/conversations?user_id=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58578 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56778 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55759 - "GET /api/admin/documents?admin_user_id=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55763 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55759 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55759 - "GET /api/conversations?user_id=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51059 - "POST /api/query HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55759 - "POST /api/query HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55759 - "GET /api/conversations?user_id=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49958 - "POST /api/query HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49958 - "GET /api/conversations?user_id=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57014 - "OPTIONS /api/conversations/2?user_id=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57014 - "DELETE /api/conversations/2?user_id=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57014 - "GET /api/conversations?user_id=20 HTTP/1.1" 200 OK
+E:\Software Engineering Stuff\CS 157A\RAGdoll-AI-Assistant-Architecture-CS157A-Team5-Database-Project\src\rag_pipeline\local_query.py:2181: DeprecationWarning: 
+        on_event is deprecated, use lifespan event handlers instead.
+
+        Read more about it in the
+        [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+        
+  @app.on_event("startup")
+INFO:     Started server process [27956]
+INFO:     Waiting for application startup.
+Temporary administrator 20 is ready in MySQL.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:50608 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50610 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50612 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62468 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62468 - "GET /api/conversations?user_id=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62475 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62477 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50801 - "GET /api/admin/documents?admin_user_id=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52128 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53377 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53377 - "GET /api/conversations?user_id=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53382 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53384 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53377 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53377 - "GET /api/conversations?user_id=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53391 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53393 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55248 - "GET /api/admin/documents?admin_user_id=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55248 - "GET /api/admin/tiers?admin_user_id=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55248 - "GET /api/admin/audit-logs?admin_user_id=20&limit=100 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63906 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63908 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50568 - "GET /api/admin/documents?admin_user_id=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52237 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50568 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50568 - "GET /api/conversations?user_id=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52242 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50568 - "GET /api/admin/documents?admin_user_id=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55612 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55614 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53392 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53392 - "GET /api/conversations?user_id=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53392 - "GET /api/conversations/1?user_id=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53392 - "OPTIONS /api/conversations/1?user_id=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53392 - "DELETE /api/conversations/1?user_id=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53392 - "GET /api/conversations?user_id=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53392 - "OPTIONS /api/query HTTP/1.1" 200 OK
+llama_kv_cache_iswa: using full-size SWA cache (ref: https://github.com/ggml-org/llama.cpp/pull/13194#issuecomment-2868343055)
+INFO:     127.0.0.1:53392 - "POST /api/query HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53392 - "GET /api/conversations?user_id=0 HTTP/1.1" 200 OK
+Loading weights:   0%|          | 0/199 [00:00<?, ?it/s]Loading weights:  15%|#5        | 30/199 [00:00<00:00, 286.77it/s]Loading weights:  37%|###7      | 74/199 [00:00<00:00, 356.93it/s]Loading weights:  57%|#####6    | 113/199 [00:00<00:00, 361.91it/s]Loading weights:  75%|#######5  | 150/199 [00:00<00:00, 349.72it/s]Loading weights:  94%|#########4| 188/199 [00:00<00:00, 357.03it/s]Loading weights: 100%|##########| 199/199 [00:00<00:00, 367.23it/s]
+INFO:     127.0.0.1:59424 - "POST /api/query HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59424 - "GET /api/conversations?user_id=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55729 - "POST /api/query HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55729 - "GET /api/conversations?user_id=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52054 - "POST /api/query HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52054 - "GET /api/conversations?user_id=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55995 - "POST /api/query HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55995 - "GET /api/conversations?user_id=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51612 - "OPTIONS /api/conversations/1?user_id=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51612 - "DELETE /api/conversations/1?user_id=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51612 - "GET /api/conversations?user_id=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50192 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50194 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51612 - "GET /api/admin/documents?admin_user_id=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51612 - "GET /api/admin/tiers?admin_user_id=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51612 - "GET /api/admin/audit-logs?admin_user_id=20&limit=100 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60961 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53107 - "GET /api/admin/documents?admin_user_id=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52938 - "GET /api/admin/tiers?admin_user_id=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49566 - "GET /api/admin/audit-logs?admin_user_id=20&limit=100 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49566 - "GET /api/admin/audit-logs?admin_user_id=20&limit=100 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49566 - "GET /api/admin/audit-logs?admin_user_id=20&limit=100 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49566 - "GET /api/admin/audit-logs?admin_user_id=20&limit=100 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49566 - "GET /api/admin/audit-logs?admin_user_id=20&limit=100 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65340 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65342 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60057 - "GET /api/admin/documents?admin_user_id=20 HTTP/1.1" 200 OK

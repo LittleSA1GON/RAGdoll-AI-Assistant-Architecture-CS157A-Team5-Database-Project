@@ -292,12 +292,13 @@
                                     <th>Document</th>
                                     <th>Status</th>
                                     <th>Chunks</th>
+                                    <th>Embedding</th>
                                     <th>Uploaded</th>
                                     <th>Action</th>
                                 </tr>
                                 </thead>
                                 <tbody id="document-table-body">
-                                <tr><td colspan="5" class="empty-row">Loading documents…</td></tr>
+                                <tr><td colspan="6" class="empty-row">Loading documents…</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -504,7 +505,7 @@
         if (!Array.isArray(documents) || documents.length === 0) {
             const row = document.createElement("tr");
             const cell = document.createElement("td");
-            cell.colSpan = 5;
+            cell.colSpan = 6;
             cell.className = "empty-row";
             cell.textContent = "No RAG documents have been uploaded.";
             row.appendChild(cell);
@@ -534,6 +535,13 @@
             const chunksCell = document.createElement("td");
             chunksCell.textContent = String(documentRecord.chunk_count || 0);
 
+            const embeddingCell = document.createElement("td");
+            const embeddingModel = documentRecord.embedding_model || "Not embedded";
+            const embeddingDimension = Number(documentRecord.embedding_dimension || 0);
+            embeddingCell.textContent = embeddingDimension > 0
+                ? embeddingModel + " · " + embeddingDimension + "D"
+                : embeddingModel;
+
             const dateCell = document.createElement("td");
             dateCell.textContent = formatDate(documentRecord.uploaded_at);
 
@@ -547,7 +555,7 @@
             });
             actionCell.appendChild(removeButton);
 
-            [nameCell, statusCell, chunksCell, dateCell, actionCell].forEach(function (cell) {
+            [nameCell, statusCell, chunksCell, embeddingCell, dateCell, actionCell].forEach(function (cell) {
                 row.appendChild(cell);
             });
             documentTableBody.appendChild(row);
@@ -566,7 +574,7 @@
             loadedTabs.documents = true;
             setMessage(documentMessage, "", "");
         } catch (error) {
-            documentTableBody.innerHTML = '<tr><td colspan="5" class="empty-row">Documents could not be loaded.</td></tr>';
+            documentTableBody.innerHTML = '<tr><td colspan="6" class="empty-row">Documents could not be loaded.</td></tr>';
             setMessage(documentMessage, error.message, "error");
         }
     }

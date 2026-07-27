@@ -33,6 +33,10 @@ DEFAULT_MODEL_DIRECTORY = PROJECT_ROOT / "models" / "embedding" / "bge-base-en-v
 EMBEDDING_MODEL_DIRECTORY = Path(
     os.getenv("RAGDOLL_EMBEDDING_MODEL_DIR", str(DEFAULT_MODEL_DIRECTORY))
 ).expanduser().resolve()
+EMBEDDING_MODEL_NAME = (
+    os.getenv("RAGDOLL_EMBEDDING_MODEL_NAME", "BAAI/bge-base-en-v1.5").strip()
+    or "BAAI/bge-base-en-v1.5"
+)
 
 DEFAULT_QUERY_PREFIX = "Represent this sentence for searching relevant passages: "
 QUERY_PREFIX = os.getenv("RAGDOLL_EMBEDDING_QUERY_PREFIX", DEFAULT_QUERY_PREFIX)
@@ -57,6 +61,7 @@ class PreparedDocument:
     chunks: List[str]
     embeddings: List[List[float]]
     embedding_dimension: int
+    embedding_model_name: str
     model_directory: str
 
 
@@ -158,6 +163,7 @@ class LocalSentenceEmbedder:
         directory_exists = self.model_directory.is_dir()
         model_loaded = self._model is not None
         return {
+            "model_name": EMBEDDING_MODEL_NAME,
             "model_directory": str(self.model_directory),
             "directory_exists": directory_exists,
             "config_present": (self.model_directory / "config.json").is_file(),
@@ -299,5 +305,6 @@ def prepare_document(path: Path) -> PreparedDocument:
         chunks=chunks,
         embeddings=embeddings,
         embedding_dimension=dimension,
+        embedding_model_name=EMBEDDING_MODEL_NAME,
         model_directory=str(EMBEDDER.model_directory),
     )

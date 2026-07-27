@@ -7,6 +7,7 @@ os.environ.setdefault("PYTHONDONTWRITEBYTECODE", "1")
 sys.dont_write_bytecode = True
 
 import json
+import math
 import re
 import threading
 import time
@@ -33,6 +34,7 @@ try:
     from embedding import (
         DocumentExtractionError,
         EMBEDDER,
+        EMBEDDING_MODEL_NAME,
         EmbeddingConfigurationError,
         SUPPORTED_EXTENSIONS,
         embed_query,
@@ -42,6 +44,7 @@ except ImportError:
     from .embedding import (
         DocumentExtractionError,
         EMBEDDER,
+        EMBEDDING_MODEL_NAME,
         EmbeddingConfigurationError,
         SUPPORTED_EXTENSIONS,
         embed_query,
@@ -77,6 +80,21 @@ UPLOAD_DIRECTORY = Path(
 ).resolve()
 MAX_UPLOAD_BYTES = max(1, int(os.getenv("RAGDOLL_MAX_UPLOAD_MB", "25"))) * 1024 * 1024
 RAG_TOP_K = max(1, int(os.getenv("RAGDOLL_RAG_TOP_K", "4")))
+RAG_MIN_SIMILARITY = min(
+    1.0, max(-1.0, float(os.getenv("RAGDOLL_RAG_MIN_SIMILARITY", "0.55")))
+)
+RAG_SCORE_MARGIN = min(
+    1.0, max(0.0, float(os.getenv("RAGDOLL_RAG_SCORE_MARGIN", "0.08")))
+)
+# Once the best chunk clears the main relevance threshold, additional chunks
+# from that same document may be included at this lower cosine floor. This is
+# useful for broad requests such as "summarize the project proposal," where a
+# single top chunk does not contain the whole answer.
+RAG_CONTEXT_MIN_SIMILARITY = min(
+    1.0,
+    max(-1.0, float(os.getenv("RAGDOLL_RAG_CONTEXT_MIN_SIMILARITY", "0.35"))),
+)
+RAG_ACCESS_SCOPE = "all_users"
 RAG_MAX_CHUNKS_SCANNED = max(1, int(os.getenv("RAGDOLL_RAG_MAX_CHUNKS", "5000")))
 RAG_ENABLED = os.getenv("RAGDOLL_RAG_ENABLED", "true").lower() not in {
     "0", "false", "no"
@@ -691,6 +709,29 @@ class ConversationDatabase:
                 finally:
                     cursor.close()
 
+    @staticmethod
+    def _ensure_query_embedding_columns(cursor: Any) -> None:
+        """Keep embedding metadata compatible with older local databases."""
+
+        cursor.execute("SHOW COLUMNS FROM Queries")
+        query_columns = {str(row["Field"]) for row in cursor.fetchall()}
+        query_required = {
+            "embedding_model": "VARCHAR(150) NULL AFTER embedding_vector",
+            "embedding_dimension": "INT NULL AFTER embedding_model",
+            "rag_eligible": "TINYINT(1) NOT NULL DEFAULT 1 AFTER embedding_dimension",
+        }
+        for column, definition in query_required.items():
+            if column not in query_columns:
+                cursor.execute(f"ALTER TABLE Queries ADD COLUMN {column} {definition}")
+
+        cursor.execute("SHOW COLUMNS FROM Retrieves")
+        retrieve_columns = {str(row["Field"]) for row in cursor.fetchall()}
+        if "similarity_score" not in retrieve_columns:
+            cursor.execute(
+                "ALTER TABLE Retrieves "
+                "ADD COLUMN similarity_score DECIMAL(8,6) NULL AFTER chunk_id"
+            )
+
     def save_turn(
         self,
         user_id: int,
@@ -700,6 +741,7 @@ class ConversationDatabase:
         model_id: Optional[int],
         query_embedding: Optional[List[float]] = None,
         retrieved_chunks: Optional[List[Dict[str, Any]]] = None,
+        rag_eligible: bool = True,
     ) -> int:
         if model_id is None:
             raise RuntimeError("The selected model is not registered in MySQL.")
@@ -708,6 +750,7 @@ class ConversationDatabase:
             with _database_connection() as connection:
                 cursor = connection.cursor(dictionary=True)
                 try:
+                    self._ensure_query_embedding_columns(cursor)
                     if user_id == DEFAULT_USER_ID:
                         self._ensure_default_user_records(cursor)
                     self._verify_user(cursor, user_id)
@@ -741,17 +784,22 @@ class ConversationDatabase:
                     query_id = self._next_id(cursor, "Queries", "query_id")
                     response_id = self._next_id(cursor, "Responses", "response_id")
 
+                    embedding_values = query_embedding or []
                     cursor.execute(
                         """
                         INSERT INTO Queries
-                            (query_id, user_id, query_text, embedding_vector, created_at)
-                        VALUES (%s, %s, %s, %s, NOW())
+                            (query_id, user_id, query_text, embedding_vector,
+                             embedding_model, embedding_dimension, rag_eligible, created_at)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, NOW())
                         """,
                         (
                             query_id,
                             user_id,
                             query_text,
-                            json.dumps(query_embedding or [], separators=(",", ":")),
+                            json.dumps(embedding_values, separators=(",", ":")),
+                            EMBEDDING_MODEL_NAME if embedding_values else None,
+                            len(embedding_values) if embedding_values else None,
+                            1 if rag_eligible else 0,
                         ),
                     )
                     cursor.execute(
@@ -784,14 +832,17 @@ class ConversationDatabase:
                     for retrieved in retrieved_chunks or []:
                         cursor.execute(
                             """
-                            INSERT IGNORE INTO Retrieves
-                                (query_id, document_id, chunk_id)
-                            VALUES (%s, %s, %s)
+                            INSERT INTO Retrieves
+                                (query_id, document_id, chunk_id, similarity_score)
+                            VALUES (%s, %s, %s, %s)
+                            ON DUPLICATE KEY UPDATE
+                                similarity_score = VALUES(similarity_score)
                             """,
                             (
                                 query_id,
                                 int(retrieved["document_id"]),
                                 int(retrieved["chunk_id"]),
+                                float(retrieved.get("score", 0.0)),
                             ),
                         )
 
@@ -831,12 +882,35 @@ class DocumentDatabase:
                 "VARCHAR(20) NOT NULL DEFAULT 'uploaded' AFTER file_path"
             ),
             "processing_error": "TEXT NULL AFTER processing_status",
+            "rag_access_scope": (
+                "VARCHAR(20) NOT NULL DEFAULT 'all_users' AFTER processing_error"
+            ),
         }
         cursor.execute("SHOW COLUMNS FROM Documents")
         present = {str(row["Field"]) for row in cursor.fetchall()}
         for column, definition in required.items():
             if column not in present:
                 cursor.execute(f"ALTER TABLE Documents ADD COLUMN {column} {definition}")
+        cursor.execute(
+            "UPDATE Documents SET rag_access_scope = %s "
+            "WHERE rag_access_scope IS NULL OR rag_access_scope = ''",
+            (RAG_ACCESS_SCOPE,),
+        )
+
+    @staticmethod
+    def _ensure_chunk_embedding_columns(cursor: Any) -> None:
+        """Add embedding provenance columns when an older schema is in use."""
+
+        cursor.execute("SHOW COLUMNS FROM Chunks")
+        present = {str(row["Field"]) for row in cursor.fetchall()}
+        required = {
+            "embedding_model": "VARCHAR(150) NULL AFTER embedding_vector",
+            "embedding_dimension": "INT NULL AFTER embedding_model",
+            "embedded_at": "DATETIME NULL AFTER embedding_dimension",
+        }
+        for column, definition in required.items():
+            if column not in present:
+                cursor.execute(f"ALTER TABLE Chunks ADD COLUMN {column} {definition}")
 
     @staticmethod
     def _ensure_default_admin_records(cursor: Any) -> None:
@@ -1030,10 +1104,17 @@ class DocumentDatabase:
                         """
                         INSERT INTO Documents
                             (document_id, user_id, file_name, file_type, file_path,
-                             processing_status, processing_error, uploaded_at)
-                        VALUES (%s, %s, %s, %s, NULL, 'processing', NULL, NOW())
+                             processing_status, processing_error, rag_access_scope,
+                             uploaded_at)
+                        VALUES (%s, %s, %s, %s, NULL, 'processing', NULL, %s, NOW())
                         """,
-                        (document_id, admin_user_id, file_name, file_type),
+                        (
+                            document_id,
+                            admin_user_id,
+                            file_name,
+                            file_type,
+                            RAG_ACCESS_SCOPE,
+                        ),
                     )
                     cursor.execute(
                         """
@@ -1070,6 +1151,8 @@ class DocumentDatabase:
         document_id: int,
         chunks: List[str],
         embeddings: List[List[float]],
+        embedding_model_name: str,
+        embedding_dimension: int,
     ) -> None:
         if len(chunks) != len(embeddings):
             raise ValueError("Chunk and embedding counts do not match.")
@@ -1078,6 +1161,7 @@ class DocumentDatabase:
             with _database_connection() as connection:
                 cursor = connection.cursor(dictionary=True)
                 try:
+                    self._ensure_chunk_embedding_columns(cursor)
                     next_chunk_id = self._next_id(cursor, "Chunks", "chunk_id")
                     for offset, (chunk_text, vector) in enumerate(
                         zip(chunks, embeddings)
@@ -1086,14 +1170,17 @@ class DocumentDatabase:
                         cursor.execute(
                             """
                             INSERT INTO Chunks
-                                (chunk_id, document_id, chunk_text, embedding_vector)
-                            VALUES (%s, %s, %s, %s)
+                                (chunk_id, document_id, chunk_text, embedding_vector,
+                                 embedding_model, embedding_dimension, embedded_at)
+                            VALUES (%s, %s, %s, %s, %s, %s, NOW())
                             """,
                             (
                                 chunk_id,
                                 document_id,
                                 chunk_text,
                                 json.dumps(vector, separators=(",", ":")),
+                                embedding_model_name,
+                                embedding_dimension,
                             ),
                         )
                         cursor.execute(
@@ -1142,6 +1229,7 @@ class DocumentDatabase:
         with _database_connection() as connection:
             cursor = connection.cursor(dictionary=True)
             self._ensure_document_columns(cursor)
+            self._ensure_chunk_embedding_columns(cursor)
             self._verify_admin(cursor, admin_user_id)
             cursor.execute(
                 """
@@ -1152,7 +1240,9 @@ class DocumentDatabase:
                        d.processing_status,
                        d.processing_error,
                        d.uploaded_at,
-                       COUNT(c.chunk_id) AS chunk_count
+                       COUNT(c.chunk_id) AS chunk_count,
+                       MAX(c.embedding_model) AS embedding_model,
+                       MAX(c.embedding_dimension) AS embedding_dimension
                 FROM Documents d
                 JOIN Manages m
                   ON m.document_id = d.document_id
@@ -1276,32 +1366,70 @@ class DocumentDatabase:
 
 
 class RagDatabase:
-    """Performs small-dataset cosine retrieval over embeddings stored in MySQL."""
+    """Cosine retrieval with intent and relevance gates."""
+
+    _SOCIAL_ONLY_PATTERNS = (
+        r"(?:hi|hello|hey|hiya|greetings)(?:\s+(?:there|ragdoll))?",
+        r"good\s+(?:morning|afternoon|evening)",
+        r"(?:how\s+are\s+you|how(?:'s|\s+is)\s+it\s+going|what(?:'s|\s+is)\s+up)",
+        r"(?:thanks|thank\s+you|thx)(?:\s+(?:so\s+much|very\s+much))?",
+        r"(?:bye|goodbye|see\s+you|see\s+ya|good\s+night)",
+        r"(?:who\s+are\s+you|what\s+can\s+you\s+do)",
+    )
 
     @staticmethod
-    def _dot(left: List[float], right: List[float]) -> float:
-        return float(sum(a * b for a, b in zip(left, right)))
+    def _cosine_similarity(left: List[float], right: List[float]) -> float:
+        if len(left) != len(right) or not left:
+            return -1.0
+        dot = float(sum(a * b for a, b in zip(left, right)))
+        left_norm = math.sqrt(sum(value * value for value in left))
+        right_norm = math.sqrt(sum(value * value for value in right))
+        if left_norm == 0.0 or right_norm == 0.0:
+            return -1.0
+        return dot / (left_norm * right_norm)
+
+    @classmethod
+    def should_retrieve(cls, query_text: str) -> Tuple[bool, Optional[str]]:
+        """Skip uploaded documents for greetings and other social-only turns."""
+
+        normalized = re.sub(r"[^a-z0-9'\s]+", " " , query_text.lower())
+        normalized = re.sub(r"\s+", " ", normalized).strip()
+        if not normalized:
+            return False, "empty_query"
+        if len(normalized.split()) <= 8 and any(
+            re.fullmatch(pattern, normalized)
+            for pattern in cls._SOCIAL_ONLY_PATTERNS
+        ):
+            return False, "social_or_greeting_query"
+        return True, None
 
     def retrieve(
         self, query_text: str, top_k: int = RAG_TOP_K
-    ) -> Tuple[List[float], List[Dict[str, Any]]]:
+    ) -> Tuple[List[float], List[Dict[str, Any]], Dict[str, Any]]:
         query_vector = embed_query(query_text)
         with _database_connection() as connection:
             cursor = connection.cursor(dictionary=True)
+            DocumentDatabase._ensure_document_columns(cursor)
+            DocumentDatabase._ensure_chunk_embedding_columns(cursor)
+            # Persist automatic schema/access-scope repairs before retrieval.
+            connection.commit()
             cursor.execute(
                 """
                 SELECT c.chunk_id,
                        c.document_id,
                        c.chunk_text,
                        c.embedding_vector,
+                       c.embedding_model,
+                       c.embedding_dimension,
                        d.file_name
                 FROM Chunks c
                 JOIN Documents d ON d.document_id = c.document_id
                 WHERE d.processing_status = 'ready'
+                  AND COALESCE(d.rag_access_scope, 'all_users') = %s
                 ORDER BY c.chunk_id DESC
                 LIMIT %s
                 """,
-                (RAG_MAX_CHUNKS_SCANNED,),
+                (RAG_ACCESS_SCOPE, RAG_MAX_CHUNKS_SCANNED),
             )
             rows = list(cursor.fetchall())
             cursor.close()
@@ -1309,37 +1437,98 @@ class RagDatabase:
         scored: List[Dict[str, Any]] = []
         for row in rows:
             try:
-                stored = json.loads(str(row.get("embedding_vector") or "[]"))
+                raw_vector = row.get("embedding_vector")
+                if isinstance(raw_vector, (list, tuple)):
+                    stored = raw_vector
+                else:
+                    stored = json.loads(str(raw_vector or "[]"))
                 vector = [float(value) for value in stored]
             except (TypeError, ValueError, json.JSONDecodeError):
                 continue
             if len(vector) != len(query_vector) or not vector:
-                # Legacy seed vectors may have a different dimension.
+                # Legacy/demo vectors are ignored instead of contaminating retrieval.
                 continue
+            stored_model = str(row.get("embedding_model") or "").strip()
+            if stored_model and stored_model != EMBEDDING_MODEL_NAME:
+                # Equal-length vectors from different embedding models are not comparable.
+                continue
+            score = self._cosine_similarity(query_vector, vector)
             scored.append(
                 {
                     "chunk_id": int(row["chunk_id"]),
                     "document_id": int(row["document_id"]),
                     "file_name": str(row.get("file_name") or "document"),
                     "chunk_text": str(row.get("chunk_text") or ""),
-                    "score": self._dot(query_vector, vector),
+                    "embedding_model": row.get("embedding_model"),
+                    "embedding_dimension": row.get("embedding_dimension"),
+                    "score": score,
                 }
             )
 
         scored.sort(key=lambda item: item["score"], reverse=True)
-        return query_vector, scored[: max(1, top_k)]
+        top_score = float(scored[0]["score"]) if scored else None
+        accepted: List[Dict[str, Any]] = []
+        expanded_chunk_count = 0
+        if top_score is not None and top_score >= RAG_MIN_SIMILARITY:
+            relative_floor = max(RAG_MIN_SIMILARITY, top_score - RAG_SCORE_MARGIN)
+            strict_matches = [
+                item for item in scored
+                if float(item["score"]) >= relative_floor
+            ]
+
+            # A passing top chunk proves that the document is relevant. Fill
+            # the remaining context slots with the best cosine-ranked chunks
+            # from that same document so broad questions can be answered from
+            # more than one isolated paragraph.
+            top_document_id = int(scored[0]["document_id"])
+            same_document_expansion = [
+                item
+                for item in scored
+                if int(item["document_id"]) == top_document_id
+                and float(item["score"]) >= RAG_CONTEXT_MIN_SIMILARITY
+                and item not in strict_matches
+            ]
+
+            for item in strict_matches + same_document_expansion:
+                if item not in accepted:
+                    accepted.append(item)
+                if len(accepted) >= max(1, top_k):
+                    break
+            expanded_chunk_count = max(0, len(accepted) - len(strict_matches))
+
+        metadata = {
+            "candidate_count": len(scored),
+            "top_score": top_score,
+            "minimum_similarity": RAG_MIN_SIMILARITY,
+            "context_minimum_similarity": RAG_CONTEXT_MIN_SIMILARITY,
+            "score_margin": RAG_SCORE_MARGIN,
+            "access_scope": RAG_ACCESS_SCOPE,
+            "relevant_chunk_count": len(accepted),
+            "expanded_chunk_count": expanded_chunk_count,
+            "skip_reason": None if accepted else "below_similarity_threshold",
+        }
+        return query_vector, accepted, metadata
 
     @staticmethod
     def build_context(chunks: List[Dict[str, Any]]) -> str:
         if not chunks:
             return ""
         sections = [
-            "Use the following retrieved document context when it is relevant. "
-            "Do not claim that the context says something it does not say."
+            "RAGDoll has already authorized this user to use the shared RAG "
+            "knowledge base. The excerpts below were selected from uploaded "
+            "documents by normalized embedding vectors and cosine similarity. "
+            "They are application-provided context, not inaccessible external "
+            "files. When they answer the request, respond directly from them. "
+            "Do not say that you lack document access, that the content is "
+            "private, or that using it would violate confidentiality. Cite the "
+            "supporting excerpt inline as [Source N]. If the excerpts are "
+            "incomplete, answer what they support and clearly identify only the "
+            "specific missing detail."
         ]
         for index, chunk in enumerate(chunks, start=1):
             sections.append(
-                f"[Source {index}: {chunk['file_name']}]\n{chunk['chunk_text']}"
+                f"[Source {index}: {chunk['file_name']}; "
+                f"similarity={float(chunk['score']):.4f}]\n{chunk['chunk_text']}"
             )
         return "\n\n".join(sections)
 
@@ -1837,15 +2026,73 @@ def _trim_history(
     return selected
 
 
+_RAG_ACCESS_REFUSAL_PATTERNS = (
+    "do not have access",
+    "don't have access",
+    "cannot access",
+    "can't access",
+    "no access to the document",
+    "privacy and confidentiality",
+    "breach of privacy",
+    "breach of confidentiality",
+    "document you've referenced",
+    "document you referenced",
+)
+
+
+def _looks_like_false_rag_refusal(response_text: str) -> bool:
+    """Detect a model claiming it cannot use context already supplied by RAG."""
+
+    normalized = re.sub(r"\s+", " ", str(response_text or "").lower()).strip()
+    return any(pattern in normalized for pattern in _RAG_ACCESS_REFUSAL_PATTERNS)
+
+
+def _build_extractive_rag_answer(chunks: List[Dict[str, Any]]) -> str:
+    """Return a guaranteed grounded answer if a small model refuses twice."""
+
+    lines = [
+        "Based on the uploaded RAG documents, the relevant information is:",
+    ]
+    for index, chunk in enumerate(chunks, start=1):
+        text = re.sub(r"\s+", " ", str(chunk.get("chunk_text") or "")).strip()
+        if len(text) > 700:
+            text = text[:697].rstrip() + "..."
+        if text:
+            lines.append(f"- {text} [Source {index}]")
+    if len(lines) == 1:
+        lines.append("The retrieved excerpts were empty.")
+    return "\n\n".join(lines)
+
+
 def _generate_response(
     llm: Any,
     request: QueryRequest,
     history: List[Dict[str, str]],
     rag_context: str = "",
+    strict_rag_grounding: bool = False,
 ) -> Tuple[str, int]:
     remembered_turns = _trim_history(history, request)
     messages: List[Dict[str, str]] = []
-    system_parts = [part for part in [request.system_prompt, rag_context] if part]
+    rag_active = bool(rag_context)
+    rag_policy = ""
+    if rag_active:
+        rag_policy = (
+            "The current user is allowed to use all shared RAG documents. "
+            "The application has already retrieved and supplied the relevant "
+            "excerpts. Treat them as available evidence and answer from them. "
+            "Never claim that you cannot access the referenced document or that "
+            "using the supplied excerpts would violate privacy or confidentiality."
+        )
+        if strict_rag_grounding:
+            rag_policy += (
+                " This is a grounding retry. Give a direct, factual answer based "
+                "on the excerpts, cite [Source N], and do not replace the answer "
+                "with a generic description of what the document might contain."
+            )
+
+    system_parts = [
+        part for part in [request.system_prompt, rag_policy, rag_context] if part
+    ]
     combined_system_prompt = "\n\n".join(system_parts)
     if combined_system_prompt:
         messages.append({"role": "system", "content": combined_system_prompt})
@@ -1855,13 +2102,26 @@ def _generate_response(
             messages.append(
                 {"role": "assistant", "content": turn["response_text"]}
             )
-    messages.append({"role": "user", "content": request.query_text})
+
+    current_user_message = request.query_text
+    if rag_active:
+        current_user_message = (
+            "Use the application-provided RAG excerpts above to answer this "
+            "request directly. The excerpts are available to this user. "
+            "Cite supporting excerpts as [Source N].\n\n"
+            f"Request: {request.query_text}"
+        )
+    messages.append({"role": "user", "content": current_user_message})
+
+    generation_temperature = (
+        min(request.temperature, 0.2) if strict_rag_grounding else request.temperature
+    )
 
     try:
         result = llm.create_chat_completion(
             messages=messages,
             max_tokens=request.max_tokens,
-            temperature=request.temperature,
+            temperature=generation_temperature,
         )
         content = result["choices"][0]["message"]["content"]
         return str(content or "").strip(), len(remembered_turns)
@@ -1873,7 +2133,7 @@ def _generate_response(
             prompt_parts.append(f"User: {turn['query_text']}")
             if turn.get("response_text"):
                 prompt_parts.append(f"Assistant: {turn['response_text']}")
-        prompt_parts.append(f"User: {request.query_text}")
+        prompt_parts.append(f"User: {current_user_message}")
         prompt_parts.append("Assistant:")
         prompt = "\n\n".join(prompt_parts)
 
@@ -1881,7 +2141,7 @@ def _generate_response(
             result = llm(
                 prompt,
                 max_tokens=request.max_tokens,
-                temperature=request.temperature,
+                temperature=generation_temperature,
                 echo=False,
                 stop=["</s>", "<end_of_turn>", "\nUser:"],
             )
@@ -1895,7 +2155,7 @@ def _generate_response(
             ) from completion_error
 
 
-app = FastAPI(title="RAGdoll Local RAG API", version="1.3")
+app = FastAPI(title="RAGdoll Local RAG API", version="1.4")
 
 allowed_origins = [
     origin.strip()
@@ -1952,6 +2212,10 @@ def health() -> Dict[str, Any]:
         "database_error": database_error,
         "embedding": EMBEDDER.status(),
         "rag_enabled": RAG_ENABLED,
+        "rag_min_similarity": RAG_MIN_SIMILARITY,
+        "rag_context_min_similarity": RAG_CONTEXT_MIN_SIMILARITY,
+        "rag_score_margin": RAG_SCORE_MARGIN,
+        "rag_access_scope": RAG_ACCESS_SCOPE,
     }
 
 
@@ -2205,6 +2469,8 @@ async def upload_admin_document(
             document_id=document_id,
             chunks=prepared.chunks,
             embeddings=prepared.embeddings,
+            embedding_model_name=prepared.embedding_model_name,
+            embedding_dimension=prepared.embedding_dimension,
         )
         try:
             ADMIN_DATABASE.record_audit(
@@ -2223,6 +2489,7 @@ async def upload_admin_document(
             "processing_status": "ready",
             "chunk_count": len(prepared.chunks),
             "embedding_dimension": prepared.embedding_dimension,
+            "embedding_model_name": prepared.embedding_model_name,
             "embedding_model_directory": prepared.model_directory,
         }
     except PermissionError as error:
@@ -2269,23 +2536,58 @@ def query_model(request: QueryRequest) -> Dict[str, Any]:
     retrieved_chunks: List[Dict[str, Any]] = []
     rag_error: Optional[str] = None
     rag_context = ""
-    if RAG_ENABLED:
+    rag_metadata: Dict[str, Any] = {
+        "candidate_count": 0,
+        "top_score": None,
+        "minimum_similarity": RAG_MIN_SIMILARITY,
+        "score_margin": RAG_SCORE_MARGIN,
+        "relevant_chunk_count": 0,
+        "skip_reason": None,
+    }
+    rag_eligible, intent_skip_reason = RAG_DATABASE.should_retrieve(request.query_text)
+    if not RAG_ENABLED:
+        rag_metadata["skip_reason"] = "rag_disabled"
+    elif not rag_eligible:
+        rag_metadata["skip_reason"] = intent_skip_reason
+        rag_context = (
+            "The user's current message is casual conversation rather than a "
+            "document question. Reply briefly and naturally. Do not summarize or "
+            "mention uploaded documents unless the user explicitly asks about them."
+        )
+    else:
         try:
-            query_embedding, retrieved_chunks = RAG_DATABASE.retrieve(
+            query_embedding, retrieved_chunks, rag_metadata = RAG_DATABASE.retrieve(
                 request.query_text, RAG_TOP_K
             )
             rag_context = RAG_DATABASE.build_context(retrieved_chunks)
         except Exception as error:
             # The LLM remains usable when the embedding model or MySQL is offline.
             rag_error = str(error)
+            rag_metadata["skip_reason"] = "retrieval_error"
 
     try:
         llm = LOADED_MODEL.get(model_path)
         started_at = time.perf_counter()
+        rag_grounding_retry = False
+        rag_extractive_fallback = False
         with LOADED_MODEL.inference_lock:
             response_text, remembered_turn_count = _generate_response(
                 llm, request, history, rag_context
             )
+            if retrieved_chunks and _looks_like_false_rag_refusal(response_text):
+                rag_grounding_retry = True
+                # Do not include the earlier conversation on the retry because a
+                # prior refusal can cause a small model to repeat the same mistake.
+                response_text, _ = _generate_response(
+                    llm,
+                    request,
+                    [],
+                    rag_context,
+                    strict_rag_grounding=True,
+                )
+                if _looks_like_false_rag_refusal(response_text):
+                    rag_extractive_fallback = True
+                    response_text = _build_extractive_rag_answer(retrieved_chunks)
         elapsed_seconds = round(time.perf_counter() - started_at, 3)
     except RuntimeError as error:
         raise HTTPException(status_code=503, detail=str(error)) from error
@@ -2304,6 +2606,7 @@ def query_model(request: QueryRequest) -> Dict[str, Any]:
             model_id=selected.get("model_id"),
             query_embedding=query_embedding,
             retrieved_chunks=retrieved_chunks,
+            rag_eligible=rag_eligible,
         )
         conversation_saved = True
     except Exception as error:
@@ -2321,7 +2624,16 @@ def query_model(request: QueryRequest) -> Dict[str, Any]:
         "remembered_turn_count": remembered_turn_count,
         "conversation_memory_used": remembered_turn_count > 0,
         "rag_enabled": RAG_ENABLED,
+        "rag_eligible": rag_eligible,
         "rag_used": bool(retrieved_chunks),
+        "rag_skip_reason": rag_metadata.get("skip_reason"),
+        "rag_top_score": rag_metadata.get("top_score"),
+        "rag_min_similarity": rag_metadata.get("minimum_similarity"),
+        "rag_candidate_count": rag_metadata.get("candidate_count", 0),
+        "rag_expanded_chunk_count": rag_metadata.get("expanded_chunk_count", 0),
+        "rag_access_scope": rag_metadata.get("access_scope", RAG_ACCESS_SCOPE),
+        "rag_grounding_retry": rag_grounding_retry,
+        "rag_extractive_fallback": rag_extractive_fallback,
         "rag_error": rag_error,
         "retrieved_sources": [
             {

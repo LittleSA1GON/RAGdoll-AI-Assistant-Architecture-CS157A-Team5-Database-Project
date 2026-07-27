@@ -391,7 +391,7 @@
             }
         }
 
-        function addMessage(role, text, extraClass, assistantLabel) {
+        function addMessage(role, text, extraClass, assistantLabel, sources) {
             prepareChat();
 
             const message = document.createElement("article");
@@ -422,6 +422,25 @@
             renderMarkdown(bubble, text);
 
             body.append(label, bubble);
+
+            if (role === "assistant" && Array.isArray(sources) && sources.length > 0) {
+                const sourceList = document.createElement("div");
+                sourceList.className = "message-sources";
+                const sourceTitle = document.createElement("span");
+                sourceTitle.className = "message-sources-label";
+                sourceTitle.textContent = "RAG sources";
+                sourceList.appendChild(sourceTitle);
+                sources.forEach(function (source) {
+                    const badge = document.createElement("span");
+                    badge.className = "message-source-badge";
+                    const score = Number(source.score);
+                    badge.textContent = (source.file_name || "Document") +
+                        (Number.isFinite(score) ? " · " + score.toFixed(3) : "");
+                    sourceList.appendChild(badge);
+                });
+                body.appendChild(sourceList);
+            }
+
             inner.appendChild(body);
             message.appendChild(inner);
             conversation.appendChild(message);
@@ -835,7 +854,8 @@
                     "assistant",
                     result.response_text || "No response was returned.",
                     "",
-                    result.model_name || selectedModelLabel()
+                    result.model_name || selectedModelLabel(),
+                    result.retrieved_sources || []
                 );
 
                 if (result.conversation_id !== null && result.conversation_id !== undefined) {
@@ -853,10 +873,23 @@
                           (rememberedTurns === 1 ? " previous turn." : " previous turns.")
                         : " This is the first saved turn in this conversation.";
 
+                    let ragMessage = "";
+                    if (result.rag_used === true) {
+                        const sourceCount = Array.isArray(result.retrieved_sources)
+                            ? result.retrieved_sources.length
+                            : 0;
+                        ragMessage = " Used " + sourceCount +
+                            (sourceCount === 1 ? " relevant document chunk." : " relevant document chunks.");
+                    } else if (result.rag_skip_reason === "social_or_greeting_query") {
+                        ragMessage = " No uploaded documents were used for this conversational message.";
+                    } else if (result.rag_skip_reason === "below_similarity_threshold") {
+                        ragMessage = " No uploaded document was relevant enough to use.";
+                    }
+
                     inputHint.textContent = result.elapsed_seconds !== undefined
                         ? "Saved and generated locally in " + result.elapsed_seconds +
-                          " seconds." + memoryMessage
-                        : "Conversation saved in MySQL." + memoryMessage;
+                          " seconds." + memoryMessage + ragMessage
+                        : "Conversation saved in MySQL." + memoryMessage + ragMessage;
                 }
             } catch (error) {
                 loadingMessage.remove();

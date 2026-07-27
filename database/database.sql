@@ -60,6 +60,7 @@ CREATE TABLE `Documents` (
     file_path VARCHAR(255) NULL,
     processing_status VARCHAR(20) NOT NULL DEFAULT 'uploaded',
     processing_error TEXT NULL,
+    rag_access_scope VARCHAR(20) NOT NULL DEFAULT 'all_users',
     uploaded_at DATETIME NOT NULL,
     FOREIGN KEY (user_id) REFERENCES `Users`(user_id)
 );
@@ -68,7 +69,10 @@ CREATE TABLE `Chunks` (
     chunk_id INT PRIMARY KEY,
     document_id INT NOT NULL,
     chunk_text TEXT NOT NULL,
-    embedding_vector TEXT NOT NULL,
+    embedding_vector JSON NOT NULL,
+    embedding_model VARCHAR(150) NULL,
+    embedding_dimension INT NULL,
+    embedded_at DATETIME NULL,
     FOREIGN KEY (document_id) REFERENCES `Documents`(document_id)
         ON DELETE CASCADE
 );
@@ -86,7 +90,10 @@ CREATE TABLE `Queries` (
     query_id INT PRIMARY KEY,
     user_id INT NOT NULL,
     query_text TEXT NOT NULL,
-    embedding_vector TEXT NOT NULL,
+    embedding_vector JSON NOT NULL,
+    embedding_model VARCHAR(150) NULL,
+    embedding_dimension INT NULL,
+    rag_eligible TINYINT(1) NOT NULL DEFAULT 1,
     created_at DATETIME NOT NULL,
     FOREIGN KEY (user_id) REFERENCES `Users`(user_id)
         ON DELETE CASCADE
@@ -209,6 +216,7 @@ CREATE TABLE `Retrieves` (
     query_id INT NOT NULL,
     document_id INT NOT NULL,
     chunk_id INT NOT NULL,
+    similarity_score DECIMAL(8,6) NULL,
     PRIMARY KEY (query_id, chunk_id),
     FOREIGN KEY (query_id) REFERENCES `Queries`(query_id)
         ON DELETE CASCADE,
@@ -354,30 +362,34 @@ INSERT INTO `Documents` (
     file_path,
     processing_status,
     processing_error,
+    rag_access_scope,
     uploaded_at
 ) VALUES
-(1, 20, 'rag_overview.pdf', 'PDF', NULL, 'ready', NULL, '2026-07-03 09:00:00'),
-(2, 12, 'mysql_notes.txt', 'TXT', NULL, 'ready', NULL, '2026-07-03 09:10:00'),
-(3, 13, 'project_requirements.pdf', 'PDF', NULL, 'ready', NULL, '2026-07-03 09:20:00'),
-(4, 14, 'vector_search_guide.pdf', 'PDF', NULL, 'ready', NULL, '2026-07-03 09:30:00'),
-(5, 15, 'prompt_engineering.md', 'MD', NULL, 'ready', NULL, '2026-07-03 09:40:00'),
-(6, 1, 'ethan_research_notes.pdf', 'PDF', NULL, 'ready', NULL, '2026-07-03 10:00:00'),
-(7, 2, 'geo_database_summary.docx', 'DOCX', NULL, 'ready', NULL, '2026-07-03 10:10:00'),
-(8, 3, 'naman_model_access.txt', 'TXT', NULL, 'ready', NULL, '2026-07-03 10:20:00'),
-(9, 4, 'sophia_api_reference.pdf', 'PDF', NULL, 'ready', NULL, '2026-07-03 10:30:00'),
-(10, 5, 'michael_testing_plan.md', 'MD', NULL, 'ready', NULL, '2026-07-03 10:40:00');
+(1, 20, 'rag_overview.pdf', 'PDF', NULL, 'ready', NULL, 'all_users', '2026-07-03 09:00:00'),
+(2, 12, 'mysql_notes.txt', 'TXT', NULL, 'ready', NULL, 'all_users', '2026-07-03 09:10:00'),
+(3, 13, 'project_requirements.pdf', 'PDF', NULL, 'ready', NULL, 'all_users', '2026-07-03 09:20:00'),
+(4, 14, 'vector_search_guide.pdf', 'PDF', NULL, 'ready', NULL, 'all_users', '2026-07-03 09:30:00'),
+(5, 15, 'prompt_engineering.md', 'MD', NULL, 'ready', NULL, 'all_users', '2026-07-03 09:40:00'),
+(6, 1, 'ethan_research_notes.pdf', 'PDF', NULL, 'ready', NULL, 'all_users', '2026-07-03 10:00:00'),
+(7, 2, 'geo_database_summary.docx', 'DOCX', NULL, 'ready', NULL, 'all_users', '2026-07-03 10:10:00'),
+(8, 3, 'naman_model_access.txt', 'TXT', NULL, 'ready', NULL, 'all_users', '2026-07-03 10:20:00'),
+(9, 4, 'sophia_api_reference.pdf', 'PDF', NULL, 'ready', NULL, 'all_users', '2026-07-03 10:30:00'),
+(10, 5, 'michael_testing_plan.md', 'MD', NULL, 'ready', NULL, 'all_users', '2026-07-03 10:40:00');
 
-INSERT INTO `Chunks` VALUES
-(1, 1, 'Retrieval augmented generation uses retrieved context to improve model answers.', '[0.12, 0.25, 0.33, 0.41]'),
-(2, 2, 'MySQL stores relational data using tables, primary keys, and foreign keys.', '[0.05, 0.15, 0.28, 0.36]'),
-(3, 3, 'The project requires updated functional requirements, ERD, schemas, and table screenshots.', '[0.21, 0.30, 0.40, 0.52]'),
-(4, 4, 'Vector search compares query embeddings with stored document chunk embeddings.', '[0.18, 0.22, 0.39, 0.44]'),
-(5, 5, 'Prompt engineering improves model output by providing clear instructions and context.', '[0.14, 0.27, 0.31, 0.49]'),
-(6, 6, 'The RAGdoll application stores user prompts and generated responses for conversation history.', '[0.19, 0.24, 0.38, 0.50]'),
-(7, 7, 'Database normalization reduces duplicated data and improves consistency.', '[0.08, 0.17, 0.33, 0.42]'),
-(8, 8, 'Premium tiers can unlock additional local models and expanded usage privileges.', '[0.22, 0.31, 0.45, 0.58]'),
-(9, 9, 'API documentation explains how the application sends queries to the local model server.', '[0.11, 0.29, 0.37, 0.47]'),
-(10, 10, 'Testing plans include authentication, document upload, retrieval, and response generation cases.', '[0.16, 0.26, 0.34, 0.46]');
+INSERT INTO `Chunks`
+    (chunk_id, document_id, chunk_text, embedding_vector,
+     embedding_model, embedding_dimension, embedded_at)
+VALUES
+(1, 1, 'Retrieval augmented generation uses retrieved context to improve model answers.', '[0.12, 0.25, 0.33, 0.41]', 'legacy-demo', 4, '2026-07-03 09:00:00'),
+(2, 2, 'MySQL stores relational data using tables, primary keys, and foreign keys.', '[0.05, 0.15, 0.28, 0.36]', 'legacy-demo', 4, '2026-07-03 09:10:00'),
+(3, 3, 'The project requires updated functional requirements, ERD, schemas, and table screenshots.', '[0.21, 0.30, 0.40, 0.52]', 'legacy-demo', 4, '2026-07-03 09:20:00'),
+(4, 4, 'Vector search compares query embeddings with stored document chunk embeddings.', '[0.18, 0.22, 0.39, 0.44]', 'legacy-demo', 4, '2026-07-03 09:30:00'),
+(5, 5, 'Prompt engineering improves model output by providing clear instructions and context.', '[0.14, 0.27, 0.31, 0.49]', 'legacy-demo', 4, '2026-07-03 09:40:00'),
+(6, 6, 'The RAGdoll application stores user prompts and generated responses for conversation history.', '[0.19, 0.24, 0.38, 0.50]', 'legacy-demo', 4, '2026-07-03 10:00:00'),
+(7, 7, 'Database normalization reduces duplicated data and improves consistency.', '[0.08, 0.17, 0.33, 0.42]', 'legacy-demo', 4, '2026-07-03 10:10:00'),
+(8, 8, 'Premium tiers can unlock additional local models and expanded usage privileges.', '[0.22, 0.31, 0.45, 0.58]', 'legacy-demo', 4, '2026-07-03 10:20:00'),
+(9, 9, 'API documentation explains how the application sends queries to the local model server.', '[0.11, 0.29, 0.37, 0.47]', 'legacy-demo', 4, '2026-07-03 10:30:00'),
+(10, 10, 'Testing plans include authentication, document upload, retrieval, and response generation cases.', '[0.16, 0.26, 0.34, 0.46]', 'legacy-demo', 4, '2026-07-03 10:40:00');
 
 INSERT INTO `Conversations` VALUES
 (1, 1, 'RAG System Help', '2026-07-04 14:00:00'),
@@ -391,17 +403,20 @@ INSERT INTO `Conversations` VALUES
 (9, 9, 'Local Model Server', '2026-07-04 18:00:00'),
 (10, 10, 'Testing Checklist', '2026-07-04 18:30:00');
 
-INSERT INTO `Queries` VALUES
-(1, 1, 'How does RAG retrieve relevant chunks?', '[0.13, 0.24, 0.35, 0.48]', '2026-07-04 14:01:00'),
-(2, 2, 'How should I store chunks in MySQL?', '[0.07, 0.16, 0.29, 0.37]', '2026-07-04 14:31:00'),
-(3, 3, 'Which models can premium users access?', '[0.22, 0.31, 0.45, 0.58]', '2026-07-04 15:01:00'),
-(4, 4, 'What is the purpose of an embedding vector?', '[0.18, 0.23, 0.36, 0.43]', '2026-07-04 15:31:00'),
-(5, 5, 'How can prompts be written more clearly?', '[0.15, 0.28, 0.32, 0.50]', '2026-07-04 16:01:00'),
-(6, 6, 'Where is conversation history stored?', '[0.20, 0.25, 0.39, 0.51]', '2026-07-04 16:31:00'),
-(7, 7, 'Why should database tables be normalized?', '[0.09, 0.18, 0.34, 0.43]', '2026-07-04 17:01:00'),
-(8, 8, 'How are paid tiers connected to model access?', '[0.23, 0.32, 0.46, 0.59]', '2026-07-04 17:31:00'),
-(9, 9, 'How does the local model server receive requests?', '[0.12, 0.30, 0.38, 0.48]', '2026-07-04 18:01:00'),
-(10, 10, 'What should be tested before demo day?', '[0.17, 0.27, 0.35, 0.47]', '2026-07-04 18:31:00');
+INSERT INTO `Queries`
+    (query_id, user_id, query_text, embedding_vector, embedding_model,
+     embedding_dimension, rag_eligible, created_at)
+VALUES
+(1, 1, 'How does RAG retrieve relevant chunks?', '[0.13, 0.24, 0.35, 0.48]', 'legacy-demo', 4, 1, '2026-07-04 14:01:00'),
+(2, 2, 'How should I store chunks in MySQL?', '[0.07, 0.16, 0.29, 0.37]', 'legacy-demo', 4, 1, '2026-07-04 14:31:00'),
+(3, 3, 'Which models can premium users access?', '[0.22, 0.31, 0.45, 0.58]', 'legacy-demo', 4, 1, '2026-07-04 15:01:00'),
+(4, 4, 'What is the purpose of an embedding vector?', '[0.18, 0.23, 0.36, 0.43]', 'legacy-demo', 4, 1, '2026-07-04 15:31:00'),
+(5, 5, 'How can prompts be written more clearly?', '[0.15, 0.28, 0.32, 0.50]', 'legacy-demo', 4, 1, '2026-07-04 16:01:00'),
+(6, 6, 'Where is conversation history stored?', '[0.20, 0.25, 0.39, 0.51]', 'legacy-demo', 4, 1, '2026-07-04 16:31:00'),
+(7, 7, 'Why should database tables be normalized?', '[0.09, 0.18, 0.34, 0.43]', 'legacy-demo', 4, 1, '2026-07-04 17:01:00'),
+(8, 8, 'How are paid tiers connected to model access?', '[0.23, 0.32, 0.46, 0.59]', 'legacy-demo', 4, 1, '2026-07-04 17:31:00'),
+(9, 9, 'How does the local model server receive requests?', '[0.12, 0.30, 0.38, 0.48]', 'legacy-demo', 4, 1, '2026-07-04 18:01:00'),
+(10, 10, 'What should be tested before demo day?', '[0.17, 0.27, 0.35, 0.47]', 'legacy-demo', 4, 1, '2026-07-04 18:31:00');
 
 INSERT INTO `Responses` VALUES
 (1, 1, 1, 'The system compares the query embedding against stored chunk embeddings and retrieves the most similar chunks as context.', '2026-07-04 14:01:10'),
@@ -538,17 +553,19 @@ INSERT INTO `Generates` VALUES
 (8, 9),
 (9, 10);
 
-INSERT INTO `Retrieves` VALUES
-(1, 1, 1),
-(2, 2, 2),
-(3, 3, 3),
-(4, 4, 4),
-(5, 5, 5),
-(6, 6, 6),
-(7, 7, 7),
-(8, 8, 8),
-(9, 9, 9),
-(10, 10, 10);
+INSERT INTO `Retrieves`
+    (query_id, document_id, chunk_id, similarity_score)
+VALUES
+(1, 1, 1, 0.930000),
+(2, 2, 2, 0.910000),
+(3, 3, 3, 0.890000),
+(4, 4, 4, 0.940000),
+(5, 5, 5, 0.900000),
+(6, 6, 6, 0.920000),
+(7, 7, 7, 0.930000),
+(8, 8, 8, 0.950000),
+(9, 9, 9, 0.910000),
+(10, 10, 10, 0.900000);
 
 INSERT INTO `Answers` VALUES
 (1, 1),
