@@ -4,11 +4,11 @@
 <head>
     <meta charset="UTF-8">
     <title>RAGdoll AI - Home</title>
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/style.css?v=11">
 </head>
 <body class="landing-body">
     <nav class="landing-nav">
-        <div class="logo">RAGdoll</div>
+        <a href="index.jsp" class="logo brand-home-link">RAGdoll</a>
         <a href="views/login.jsp" class="nav-login">Log in</a>
     </nav>
     

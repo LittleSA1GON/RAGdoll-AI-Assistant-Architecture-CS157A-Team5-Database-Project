@@ -4,14 +4,14 @@
 <head>
     <meta charset="UTF-8">
     <title>Login - RAGdoll AI</title>
-    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/style.css?v=11">
 </head>
 <body class="auth-body">
     <div class="auth-wrapper">
         <div class="auth-card">
             <div class="auth-header">
                 <h2>Welcome back</h2>
-                <p>Log in to your RAGdoll account</p>
+                <p>Log in to your <a href="../index.jsp" class="brand-inline-link">RAGdoll</a> account</p>
             </div>
             
             <form action="#" method="POST" class="auth-form">
@@ -29,12 +29,18 @@
             </form>
 
             <div class="auth-footer">
-                <p><strong>Test account</strong></p>
-                <p>Open the dashboard with the temporary John Roblox account.</p>
+                <p><strong>Temporary test accounts</strong></p>
+                <p>Open the dashboard or admin document manager without entering credentials.</p>
                 <form action="dashboard.jsp" method="get">
                     <input type="hidden" name="test_user" value="john_roblox">
                     <button type="submit" class="auth-submit-btn">
                         Continue as John Roblox
+                    </button>
+                </form>
+                <form action="admin.jsp" method="get">
+                    <input type="hidden" name="test_admin" value="jane_fortnite">
+                    <button type="submit" class="auth-submit-btn temporary-admin-btn">
+                        Continue as Jane Fortnite Admin
                     </button>
                 </form>
             </div>

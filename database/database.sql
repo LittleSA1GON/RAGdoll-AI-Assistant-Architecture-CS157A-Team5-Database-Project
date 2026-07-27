@@ -281,7 +281,6 @@ INSERT INTO `Users` VALUES
 (8, 'mariag', 'maria.garcia@example.com', '2026-07-01 10:35:00'),
 (9, 'omarh', 'omar.hassan@example.com', '2026-07-01 10:40:00'),
 (10, 'lisaw', 'lisa.wilson@example.com', '2026-07-01 10:45:00'),
-(11, 'admin_avery', 'avery.admin@ragdoll.local', '2026-07-01 09:00:00'),
 (12, 'admin_blake', 'blake.admin@ragdoll.local', '2026-07-01 09:05:00'),
 (13, 'admin_casey', 'casey.admin@ragdoll.local', '2026-07-01 09:10:00'),
 (14, 'admin_devon', 'devon.admin@ragdoll.local', '2026-07-01 09:15:00'),
@@ -290,14 +289,13 @@ INSERT INTO `Users` VALUES
 (17, 'admin_gale', 'gale.admin@ragdoll.local', '2026-07-01 09:30:00'),
 (18, 'admin_harper', 'harper.admin@ragdoll.local', '2026-07-01 09:35:00'),
 (19, 'admin_iris', 'iris.admin@ragdoll.local', '2026-07-01 09:40:00'),
-(20, 'admin_riley', 'riley.admin@ragdoll.local', '2026-07-01 09:45:00');
+(20, 'jane_fortnite', 'jane.fortnite@ragdoll.local', '2026-07-01 09:45:00');
 
 INSERT INTO `User_Hashes` (user_id, password_hash, salt)
 SELECT user_id, SHA2(CONCAT(username, '_password_', user_id), 256), CONCAT('salt_', username, '_', user_id)
 FROM `Users`;
 
 INSERT INTO `Admins` VALUES
-(11, 'RAGDOLL001', 'avery.admin@ragdoll.local'),
 (12, 'RAGDOLL002', 'blake.admin@ragdoll.local'),
 (13, 'RAGDOLL003', 'casey.admin@ragdoll.local'),
 (14, 'RAGDOLL004', 'devon.admin@ragdoll.local'),
@@ -306,7 +304,7 @@ INSERT INTO `Admins` VALUES
 (17, 'RAGDOLL007', 'gale.admin@ragdoll.local'),
 (18, 'RAGDOLL008', 'harper.admin@ragdoll.local'),
 (19, 'RAGDOLL009', 'iris.admin@ragdoll.local'),
-(20, 'RAGDOLL010', 'riley.admin@ragdoll.local');
+(20, 'RAGDOLL010', 'jane.fortnite@ragdoll.local');
 
 INSERT INTO `Tiers` VALUES
 (1, 'Free', 0.00),
@@ -348,17 +346,26 @@ VALUES
 (9, 'TinyLlama 1.1B', 'LLM', '/models/tinyllama-1.1b.gguf', 'local', '', 1, 0),
 (10, 'Whisper Base', 'Speech', '/models/whisper-base.bin', 'local', '', 1, 0);
 
-INSERT INTO `Documents` VALUES
-(1, 11, 'rag_overview.pdf', 'PDF', '2026-07-03 09:00:00'),
-(2, 12, 'mysql_notes.txt', 'TXT', '2026-07-03 09:10:00'),
-(3, 13, 'project_requirements.pdf', 'PDF', '2026-07-03 09:20:00'),
-(4, 14, 'vector_search_guide.pdf', 'PDF', '2026-07-03 09:30:00'),
-(5, 15, 'prompt_engineering.md', 'MD', '2026-07-03 09:40:00'),
-(6, 1, 'ethan_research_notes.pdf', 'PDF', '2026-07-03 10:00:00'),
-(7, 2, 'geo_database_summary.docx', 'DOCX', '2026-07-03 10:10:00'),
-(8, 3, 'naman_model_access.txt', 'TXT', '2026-07-03 10:20:00'),
-(9, 4, 'sophia_api_reference.pdf', 'PDF', '2026-07-03 10:30:00'),
-(10, 5, 'michael_testing_plan.md', 'MD', '2026-07-03 10:40:00');
+INSERT INTO `Documents` (
+    document_id,
+    user_id,
+    file_name,
+    file_type,
+    file_path,
+    processing_status,
+    processing_error,
+    uploaded_at
+) VALUES
+(1, 20, 'rag_overview.pdf', 'PDF', NULL, 'ready', NULL, '2026-07-03 09:00:00'),
+(2, 12, 'mysql_notes.txt', 'TXT', NULL, 'ready', NULL, '2026-07-03 09:10:00'),
+(3, 13, 'project_requirements.pdf', 'PDF', NULL, 'ready', NULL, '2026-07-03 09:20:00'),
+(4, 14, 'vector_search_guide.pdf', 'PDF', NULL, 'ready', NULL, '2026-07-03 09:30:00'),
+(5, 15, 'prompt_engineering.md', 'MD', NULL, 'ready', NULL, '2026-07-03 09:40:00'),
+(6, 1, 'ethan_research_notes.pdf', 'PDF', NULL, 'ready', NULL, '2026-07-03 10:00:00'),
+(7, 2, 'geo_database_summary.docx', 'DOCX', NULL, 'ready', NULL, '2026-07-03 10:10:00'),
+(8, 3, 'naman_model_access.txt', 'TXT', NULL, 'ready', NULL, '2026-07-03 10:20:00'),
+(9, 4, 'sophia_api_reference.pdf', 'PDF', NULL, 'ready', NULL, '2026-07-03 10:30:00'),
+(10, 5, 'michael_testing_plan.md', 'MD', NULL, 'ready', NULL, '2026-07-03 10:40:00');
 
 INSERT INTO `Chunks` VALUES
 (1, 1, 'Retrieval augmented generation uses retrieved context to improve model answers.', '[0.12, 0.25, 0.33, 0.41]'),
@@ -411,7 +418,7 @@ INSERT INTO `Responses` VALUES
 INSERT INTO `Audit_Log` VALUES
 (1, 1, 'User account created for ethanv', 'CREATE_USER', '2026-07-01 10:00:00'),
 (2, 2, 'Payment completed for Student tier', 'PAYMENT', '2026-07-02 12:05:00'),
-(3, 11, 'Admin uploaded rag_overview.pdf', 'UPLOAD_DOCUMENT', '2026-07-03 09:00:00'),
+(3, 20, 'Admin uploaded rag_overview.pdf', 'UPLOAD_DOCUMENT', '2026-07-03 09:00:00'),
 (4, 1, 'User submitted query about RAG retrieval', 'SUBMIT_QUERY', '2026-07-04 14:01:00'),
 (5, 3, 'Payment completed for Standard tier', 'PAYMENT', '2026-07-02 12:10:00'),
 (6, 12, 'Admin uploaded mysql_notes.txt', 'UPLOAD_DOCUMENT', '2026-07-03 09:10:00'),
@@ -423,7 +430,7 @@ INSERT INTO `Audit_Log` VALUES
 INSERT INTO `Triggers` VALUES
 (1, 1),
 (2, 2),
-(11, 3),
+(20, 3),
 (1, 4),
 (3, 5),
 (12, 6),
@@ -580,7 +587,7 @@ INSERT INTO `Contains_Query` VALUES
 (10, 10);
 
 INSERT INTO `Manages` VALUES
-(11, 1, '2026-07-03 09:00:00'),
+(20, 1, '2026-07-03 09:00:00'),
 (12, 2, '2026-07-03 09:10:00'),
 (13, 3, '2026-07-03 09:20:00'),
 (14, 4, '2026-07-03 09:30:00'),

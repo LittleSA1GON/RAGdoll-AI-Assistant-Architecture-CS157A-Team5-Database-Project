@@ -25,6 +25,13 @@
         <dispatcher>FORWARD</dispatcher>
     </filter-mapping>
 
+    <filter-mapping>
+        <filter-name>LocalQueryStartupFilter</filter-name>
+        <url-pattern>/views/admin.jsp</url-pattern>
+        <dispatcher>REQUEST</dispatcher>
+        <dispatcher>FORWARD</dispatcher>
+    </filter-mapping>
+
     <servlet>
         <servlet-name>HomeServlet</servlet-name>
         <servlet-class>application.HomeServlet</servlet-class>

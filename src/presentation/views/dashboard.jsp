@@ -28,6 +28,10 @@
 %>
 <%
     if ("john_roblox".equals(request.getParameter("test_user"))) {
+        session.removeAttribute("adminUserId");
+        session.removeAttribute("adminDisplayName");
+        session.removeAttribute("adminCompanyId");
+        session.removeAttribute("temporaryAdmin");
         session.setAttribute("userId", Integer.valueOf(0));
         session.setAttribute("userDisplayName", "John Roblox");
         session.setAttribute("username", "john_roblox");
@@ -37,7 +41,12 @@
         return;
     }
 
-    Object sessionUserId = session.getAttribute("userId");
+    Object sessionAdminId = session.getAttribute("adminUserId");
+    boolean currentViewerIsAdmin = sessionAdminId != null;
+    Object sessionUserId = currentViewerIsAdmin
+        ? sessionAdminId
+        : session.getAttribute("userId");
+
     if (sessionUserId == null) {
         session.setAttribute("userId", Integer.valueOf(0));
         session.setAttribute("userDisplayName", "John Roblox");
@@ -51,22 +60,33 @@
     try {
         currentUserId = Integer.parseInt(String.valueOf(sessionUserId));
     } catch (NumberFormatException ignored) {
-        currentUserId = 0;
+        currentUserId = currentViewerIsAdmin ? 20 : 0;
     }
 
-    String currentDisplayName = String.valueOf(
-        session.getAttribute("userDisplayName") != null
-            ? session.getAttribute("userDisplayName")
-            : "John Roblox"
-    );
-    String currentTier = String.valueOf(
-        session.getAttribute("userTier") != null
-            ? session.getAttribute("userTier")
-            : "Free"
-    );
-    boolean currentUserTemporary = Boolean.TRUE.equals(
-        session.getAttribute("temporaryUser")
-    );
+    String currentDisplayName;
+    String currentTier;
+    boolean currentUserTemporary;
+    if (currentViewerIsAdmin) {
+        currentDisplayName = String.valueOf(
+            session.getAttribute("adminDisplayName") != null
+                ? session.getAttribute("adminDisplayName")
+                : "Administrator"
+        );
+        currentTier = "Administrator";
+        currentUserTemporary = Boolean.TRUE.equals(session.getAttribute("temporaryAdmin"));
+    } else {
+        currentDisplayName = String.valueOf(
+            session.getAttribute("userDisplayName") != null
+                ? session.getAttribute("userDisplayName")
+                : "John Roblox"
+        );
+        currentTier = String.valueOf(
+            session.getAttribute("userTier") != null
+                ? session.getAttribute("userTier")
+                : "Free"
+        );
+        currentUserTemporary = Boolean.TRUE.equals(session.getAttribute("temporaryUser"));
+    }
     String currentInitials = userInitials(currentDisplayName);
 %>
 <!DOCTYPE html>
@@ -75,13 +95,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - RAGdoll AI Assistant</title>
-    <link rel="stylesheet" href="../css/style.css?v=5">
+    <link rel="stylesheet" href="../css/style.css?v=11">
 </head>
 <body class="dashboard-body">
     <div class="app-shell">
         <aside class="sidebar">
             <div class="sidebar-top">
-                <h2 class="site-title">RAGdoll</h2>
+                <a href="<%= request.getContextPath() %>/index.jsp" class="site-title brand-home-link">RAGdoll</a>
+
+                <% if (currentViewerIsAdmin) { %>
+                <a class="dashboard-admin-link" href="admin.jsp">← Admin tools</a>
+                <% } %>
 
                 <button class="new-chat-btn" type="button">
                     <span class="left-icon" aria-hidden="true">○</span>
@@ -101,7 +125,7 @@
             </div>
 
             <div class="sidebar-bottom">
-                <div class="user-profile" data-user-id="<%= currentUserId %>">
+                <div class="user-profile" data-user-id="<%= currentUserId %>" data-admin-view="<%= currentViewerIsAdmin %>">
                     <div class="avatar"><%= escapeHtml(currentInitials) %></div>
                     <div class="user-info">
                         <div class="user-name"><%= escapeHtml(currentDisplayName) %></div>

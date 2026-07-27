@@ -161,3 +161,209 @@ INFO:     127.0.0.1:56819 - "OPTIONS /api/query HTTP/1.1" 200 OK
 llama_kv_cache_iswa: using full-size SWA cache (ref: https://github.com/ggml-org/llama.cpp/pull/13194#issuecomment-2868343055)
 INFO:     127.0.0.1:56819 - "POST /api/query HTTP/1.1" 200 OK
 INFO:     127.0.0.1:56819 - "GET /api/conversations?user_id=0 HTTP/1.1" 200 OK
+INFO:     Started server process [37924]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:54087 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54089 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55967 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55967 - "GET /api/conversations?user_id=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60080 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61431 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61431 - "GET /api/conversations?user_id=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59752 - "GET /api/admin/documents?admin_user_id=20 HTTP/1.1" 403 Forbidden
+INFO:     127.0.0.1:59752 - "GET /api/admin/documents?admin_user_id=11 HTTP/1.1" 403 Forbidden
+INFO:     Started server process [1804]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:50719 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64622 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64622 - "GET /api/conversations?user_id=0 HTTP/1.1" 200 OK
+INFO:     Started server process [5280]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:63981 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63981 - "GET /api/conversations?user_id=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56415 - "GET /api/admin/documents?admin_user_id=20 HTTP/1.1" 403 Forbidden
+INFO:     127.0.0.1:54575 - "GET /api/admin/documents?admin_user_id=20 HTTP/1.1" 403 Forbidden
+INFO:     127.0.0.1:60367 - "GET /api/admin/documents?admin_user_id=20 HTTP/1.1" 403 Forbidden
+INFO:     127.0.0.1:60373 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57980 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57980 - "GET /api/conversations?user_id=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57980 - "GET /api/conversations/1?user_id=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57980 - "OPTIONS /api/conversations/1?user_id=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57980 - "DELETE /api/conversations/1?user_id=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57980 - "GET /api/conversations?user_id=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64188 - "GET /api/admin/documents?admin_user_id=20 HTTP/1.1" 403 Forbidden
+INFO:     127.0.0.1:55926 - "GET /api/admin/documents?admin_user_id=20 HTTP/1.1" 403 Forbidden
+INFO:     127.0.0.1:55926 - "GET /api/admin/documents?admin_user_id=20 HTTP/1.1" 403 Forbidden
+INFO:     127.0.0.1:55926 - "GET /api/admin/documents?admin_user_id=20 HTTP/1.1" 403 Forbidden
+INFO:     127.0.0.1:55926 - "GET /api/admin/documents?admin_user_id=20 HTTP/1.1" 403 Forbidden
+INFO:     127.0.0.1:55926 - "GET /api/admin/documents?admin_user_id=20 HTTP/1.1" 403 Forbidden
+INFO:     127.0.0.1:55926 - "GET /api/admin/documents?admin_user_id=20 HTTP/1.1" 403 Forbidden
+INFO:     127.0.0.1:55926 - "GET /api/admin/documents?admin_user_id=20 HTTP/1.1" 403 Forbidden
+INFO:     127.0.0.1:55926 - "GET /api/admin/documents?admin_user_id=20 HTTP/1.1" 403 Forbidden
+INFO:     Started server process [37112]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:64005 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64007 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64009 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64011 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64013 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50060 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50060 - "GET /api/conversations?user_id=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50065 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50067 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50060 - "GET /api/admin/documents?admin_user_id=20 HTTP/1.1" 403 Forbidden
+INFO:     127.0.0.1:50060 - "GET /api/admin/documents?admin_user_id=20 HTTP/1.1" 403 Forbidden
+INFO:     127.0.0.1:50060 - "GET /api/admin/documents?admin_user_id=20 HTTP/1.1" 403 Forbidden
+INFO:     127.0.0.1:50060 - "GET /api/admin/documents?admin_user_id=20 HTTP/1.1" 403 Forbidden
+INFO:     127.0.0.1:50060 - "GET /api/admin/documents?admin_user_id=20 HTTP/1.1" 403 Forbidden
+INFO:     127.0.0.1:50060 - "GET /api/admin/documents?admin_user_id=20 HTTP/1.1" 403 Forbidden
+INFO:     127.0.0.1:50060 - "GET /api/admin/documents?admin_user_id=20 HTTP/1.1" 403 Forbidden
+INFO:     127.0.0.1:50060 - "GET /api/admin/documents?admin_user_id=20 HTTP/1.1" 403 Forbidden
+INFO:     127.0.0.1:50060 - "GET /api/admin/documents?admin_user_id=20 HTTP/1.1" 403 Forbidden
+INFO:     127.0.0.1:50060 - "GET /api/admin/documents?admin_user_id=20 HTTP/1.1" 403 Forbidden
+INFO:     127.0.0.1:50060 - "GET /api/admin/documents?admin_user_id=20 HTTP/1.1" 403 Forbidden
+INFO:     127.0.0.1:55277 - "GET /api/admin/documents?admin_user_id=20 HTTP/1.1" 403 Forbidden
+INFO:     127.0.0.1:55277 - "GET /api/admin/documents?admin_user_id=20 HTTP/1.1" 403 Forbidden
+INFO:     127.0.0.1:55277 - "GET /api/admin/documents?admin_user_id=20 HTTP/1.1" 403 Forbidden
+E:\Software Engineering Stuff\CS 157A\RAGdoll-AI-Assistant-Architecture-CS157A-Team5-Database-Project\src\rag_pipeline\local_query.py:1659: DeprecationWarning: 
+        on_event is deprecated, use lifespan event handlers instead.
+
+        Read more about it in the
+        [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+        
+  @app.on_event("startup")
+INFO:     Started server process [34372]
+INFO:     Waiting for application startup.
+Temporary administrator 20 is ready in MySQL.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:60580 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60582 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52058 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52058 - "GET /api/conversations?user_id=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52064 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52058 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52058 - "GET /api/conversations?user_id=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52070 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52073 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52058 - "GET /api/admin/documents?admin_user_id=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55955 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61670 - "GET /api/admin/documents?admin_user_id=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57002 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56134 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56134 - "GET /api/conversations?user_id=0 HTTP/1.1" 200 OK
+E:\Software Engineering Stuff\CS 157A\RAGdoll-AI-Assistant-Architecture-CS157A-Team5-Database-Project\src\rag_pipeline\local_query.py:1914: DeprecationWarning: 
+        on_event is deprecated, use lifespan event handlers instead.
+
+        Read more about it in the
+        [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+        
+  @app.on_event("startup")
+INFO:     Started server process [26288]
+INFO:     Waiting for application startup.
+Temporary administrator 20 is ready in MySQL.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:58176 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51591 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51591 - "GET /api/conversations?user_id=0 HTTP/1.1" 200 OK
+E:\Software Engineering Stuff\CS 157A\RAGdoll-AI-Assistant-Architecture-CS157A-Team5-Database-Project\src\rag_pipeline\local_query.py:1921: DeprecationWarning: 
+        on_event is deprecated, use lifespan event handlers instead.
+
+        Read more about it in the
+        [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+        
+  @app.on_event("startup")
+INFO:     Started server process [34064]
+INFO:     Waiting for application startup.
+Temporary administrator 20 is ready in MySQL.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:63077 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58923 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58923 - "GET /api/conversations?user_id=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62100 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62915 - "GET /api/admin/documents?admin_user_id=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62915 - "GET /api/admin/tiers?admin_user_id=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62915 - "GET /api/admin/audit-logs?admin_user_id=20&limit=100 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64987 - "GET /api/admin/documents?admin_user_id=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64987 - "GET /api/admin/documents?admin_user_id=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64987 - "GET /api/admin/documents?admin_user_id=20 HTTP/1.1" 200 OK
+Loading weights:   0%|          | 0/199 [00:00<?, ?it/s]Loading weights:   8%|7         | 15/199 [00:00<00:01, 140.76it/s]Loading weights:  15%|#5        | 30/199 [00:00<00:01, 145.62it/s]Loading weights:  26%|##6       | 52/199 [00:00<00:00, 165.27it/s]Loading weights:  40%|####      | 80/199 [00:00<00:00, 199.43it/s]Loading weights:  59%|#####8    | 117/199 [00:00<00:00, 250.48it/s]Loading weights:  74%|#######4  | 148/199 [00:00<00:00, 268.47it/s]Loading weights: 100%|##########| 199/199 [00:00<00:00, 306.59it/s]
+INFO:     127.0.0.1:60838 - "POST /api/admin/documents HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60838 - "GET /api/admin/documents?admin_user_id=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61356 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61356 - "GET /api/conversations?user_id=0 HTTP/1.1" 200 OK
+E:\Software Engineering Stuff\CS 157A\RAGdoll-AI-Assistant-Architecture-CS157A-Team5-Database-Project\src\rag_pipeline\local_query.py:1921: DeprecationWarning: 
+        on_event is deprecated, use lifespan event handlers instead.
+
+        Read more about it in the
+        [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+        
+  @app.on_event("startup")
+INFO:     Started server process [7936]
+INFO:     Waiting for application startup.
+Temporary administrator 20 is ready in MySQL.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:51413 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64704 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64704 - "GET /api/conversations?user_id=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51603 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64704 - "GET /api/admin/documents?admin_user_id=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49787 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64704 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64704 - "GET /api/conversations?user_id=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49795 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49797 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63223 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63223 - "GET /api/conversations?user_id=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63229 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63223 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63223 - "GET /api/conversations?user_id=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54076 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54078 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63223 - "GET /api/admin/documents?admin_user_id=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63223 - "GET /api/admin/tiers?admin_user_id=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63223 - "GET /api/admin/audit-logs?admin_user_id=20&limit=100 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65080 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50171 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50171 - "GET /api/conversations?user_id=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50176 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50171 - "GET /api/admin/documents?admin_user_id=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50181 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50171 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50171 - "GET /api/conversations?user_id=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55136 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50171 - "GET /api/admin/documents?admin_user_id=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50171 - "GET /api/admin/tiers?admin_user_id=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50171 - "GET /api/admin/audit-logs?admin_user_id=20&limit=100 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55456 - "GET /api/admin/audit-logs?admin_user_id=20&limit=100 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55456 - "GET /api/admin/audit-logs?admin_user_id=20&limit=100 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57043 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55456 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55456 - "GET /api/conversations?user_id=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57048 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55456 - "GET /api/admin/documents?admin_user_id=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57053 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57055 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55456 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55456 - "GET /api/conversations?user_id=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55456 - "OPTIONS /api/query HTTP/1.1" 200 OK
+Loading weights:   0%|          | 0/199 [00:00<?, ?it/s]Loading weights:  17%|#6        | 33/199 [00:00<00:00, 328.32it/s]Loading weights:  42%|####1     | 83/199 [00:00<00:00, 421.89it/s]Loading weights:  63%|######3   | 126/199 [00:00<00:00, 409.46it/s]Loading weights:  84%|########3 | 167/199 [00:00<00:00, 377.79it/s]Loading weights: 100%|##########| 199/199 [00:00<00:00, 425.26it/s]
+llama_kv_cache_iswa: using full-size SWA cache (ref: https://github.com/ggml-org/llama.cpp/pull/13194#issuecomment-2868343055)
+INFO:     127.0.0.1:55456 - "POST /api/query HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55456 - "GET /api/conversations?user_id=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61146 - "GET /api/conversations/1?user_id=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61196 - "POST /api/query HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61196 - "GET /api/conversations?user_id=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57192 - "POST /api/query HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57192 - "GET /api/conversations?user_id=0 HTTP/1.1" 200 OK

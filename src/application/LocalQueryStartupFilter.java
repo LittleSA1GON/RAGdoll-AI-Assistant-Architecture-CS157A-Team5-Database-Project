@@ -19,7 +19,7 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 
 /**
- * Starts the local Python model API the first time the dashboard is requested.
+ * Starts the local Python model API when the dashboard or admin page is requested.
  * Only one process is started for this deployed web application.
  */
 public class LocalQueryStartupFilter implements Filter {
@@ -57,8 +57,8 @@ public class LocalQueryStartupFilter implements Filter {
             ensureLocalQueryRunning();
         } catch (Exception error) {
             /*
-             * Allow the dashboard to load even if Python fails to start.
-             * The dashboard will display a connection error to the user.
+             * Allow the JSP page to load even if Python fails to start.
+             * The page will display a connection error to the user.
              */
             filterConfig.getServletContext().log(
                     "Unable to start the RAGdoll local model API automatically.",
@@ -82,6 +82,7 @@ public class LocalQueryStartupFilter implements Filter {
             }
 
             if (localQueryProcess != null && localQueryProcess.isAlive()) {
+                waitForService(45000L);
                 return;
             }
 
@@ -99,6 +100,8 @@ public class LocalQueryStartupFilter implements Filter {
             List<String> command =
                     new ArrayList<String>(findPythonCommand());
 
+            // -B prevents Python from creating __pycache__ directories or .pyc files.
+            command.add("-B");
             command.add(scriptPath.toString());
 
             Path logDirectory = projectRoot.resolve("logs");
@@ -120,6 +123,10 @@ public class LocalQueryStartupFilter implements Filter {
                     "PYTHONUNBUFFERED",
                     "1"
             );
+            processBuilder.environment().put(
+                    "PYTHONDONTWRITEBYTECODE",
+                    "1"
+            );
 
             localQueryProcess = processBuilder.start();
 
@@ -127,7 +134,37 @@ public class LocalQueryStartupFilter implements Filter {
                     "Started RAGdoll local model API. Output: "
                             + logFile.getAbsolutePath()
             );
+
+            waitForService(45000L);
         }
+    }
+
+    private void waitForService(long timeoutMilliseconds)
+            throws IOException, InterruptedException {
+
+        long deadline = System.currentTimeMillis() + timeoutMilliseconds;
+
+        while (System.currentTimeMillis() < deadline) {
+            if (isServiceHealthy()) {
+                return;
+            }
+
+            if (localQueryProcess != null && !localQueryProcess.isAlive()) {
+                throw new IOException(
+                        "The local RAG API process exited with code "
+                                + localQueryProcess.exitValue()
+                                + ". Check logs/local_query.log."
+                );
+            }
+
+            Thread.sleep(250L);
+        }
+
+        throw new IOException(
+                "The local RAG API did not become healthy within "
+                        + (timeoutMilliseconds / 1000L)
+                        + " seconds. Check logs/local_query.log."
+        );
     }
 
     private boolean isServiceHealthy() {
@@ -162,18 +199,34 @@ public class LocalQueryStartupFilter implements Filter {
                 .toLowerCase()
                 .contains("win");
 
-        List<List<String>> candidates;
+        List<List<String>> candidates =
+                new ArrayList<List<String>>();
+
+        String configuredPython = getSetting(
+                "RAGDOLL_PYTHON",
+                "ragdoll.python",
+                null
+        );
+
+        if (configuredPython != null
+                && !configuredPython.trim().isEmpty()) {
+            candidates.add(Arrays.asList(configuredPython));
+        }
+
+        Path virtualEnvironmentPython = windows
+                ? projectRoot.resolve(".venv").resolve("Scripts").resolve("python.exe")
+                : projectRoot.resolve(".venv").resolve("bin").resolve("python");
+
+        if (Files.isRegularFile(virtualEnvironmentPython)) {
+            candidates.add(Arrays.asList(virtualEnvironmentPython.toString()));
+        }
 
         if (windows) {
-            candidates = Arrays.asList(
-                    Arrays.asList("py", "-3"),
-                    Arrays.asList("python")
-            );
+            candidates.add(Arrays.asList("py", "-3"));
+            candidates.add(Arrays.asList("python"));
         } else {
-            candidates = Arrays.asList(
-                    Arrays.asList("python3"),
-                    Arrays.asList("python")
-            );
+            candidates.add(Arrays.asList("python3"));
+            candidates.add(Arrays.asList("python"));
         }
 
         for (List<String> candidate : candidates) {
@@ -200,8 +253,9 @@ public class LocalQueryStartupFilter implements Filter {
         }
 
         throw new IOException(
-                "Python 3 was not found. Install Python and make sure "
-                        + "py, python3, or python is on PATH."
+                "Python 3 was not found. Create a .venv in the project, "
+                        + "set RAGDOLL_PYTHON, or make sure py, python3, "
+                        + "or python is on PATH."
         );
     }
 
