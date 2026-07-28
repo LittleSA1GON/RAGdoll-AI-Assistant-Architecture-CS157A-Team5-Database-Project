@@ -1,18 +1,18 @@
 /* variables */
 :root {
-    --bg-main: #ffffff;
-    --bg-sidebar: #f8f9fa;
+    --bg-main: #fffdfb;
+    --bg-sidebar: #fff4eb;
     --text-primary: #1f2937;
     --text-secondary: #6b7280;
     --text-placeholder: #9ca3af;
-    --border-color: #e5e7eb;
-    --hover-color: #f3f4f6;
-    --accent-primary: #6366f1;
-    --accent-secondary: #8b5cf6;
+    --border-color: #ffd8c2;
+    --hover-color: #fff0e6;
+    --accent-primary: #ef4444;
+    --accent-secondary: #f97316;
     --success: #10b981;
-    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.05);
-    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
-    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.1);
+    --shadow-sm: 0 2px 8px rgba(239, 68, 68, 0.08);
+    --shadow-md: 0 6px 18px rgba(249, 115, 22, 0.12);
+    --shadow-lg: 0 12px 28px rgba(239, 68, 68, 0.16);
 }
 
 /* basic common styling */
@@ -24,7 +24,7 @@
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    background: var(--bg-main);
+    background: linear-gradient(135deg, #fff8f2 0%, #ffffff 100%);
     color: var(--text-primary);
     height: 100vh;
     overflow: hidden;
@@ -36,9 +36,9 @@ button, input, select { font-family: inherit; color: inherit; outline: none; }
 
 /* shared big components between pages */
 .app-shell { display: flex; height: 100vh; width: 100vw; }
-.landing-body { display: flex; flex-direction: column; min-height: 100vh; overflow-y: auto; }
+.landing-body { display: flex; flex-direction: column; min-height: 100vh; overflow: auto; }
 .auth-body, .hero-section { display: grid; place-items: center; height: 100vh; }
-.auth-body { background-color: var(--bg-sidebar); }
+.auth-body { background: linear-gradient(135deg, #f7f2eb 0%, #fffaf5 100%); }
 
 /* shared small components between pages */
 .btn-primary, .btn-secondary, .upgrade-btn, .auth-submit-btn, .nav-login, .new-chat-btn {
@@ -425,7 +425,7 @@ button, input, select { font-family: inherit; color: inherit; outline: none; }
 .sidebar-dashboard-link:hover {
     border-color: var(--accent-primary);
     color: var(--accent-primary);
-    background: rgba(99, 102, 241, 0.04);
+    background: rgba(249, 115, 22, 0.03);
 }
 
 /* shared brand navigation and admin dashboard access */

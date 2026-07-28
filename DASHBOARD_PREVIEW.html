@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Preview</title>
+    <link rel="stylesheet" href="src/presentation/css/style.css">
+    <style>
+        body {
+            overflow: hidden;
+            position: relative;
+        }
+        .page-link-bar {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            display: flex;
+            gap: 8px;
+            z-index: 5;
+            pointer-events: auto;
+            opacity: 0.98;
+        }
+        .page-link-bar a {
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: rgba(255,255,255,0.96);
+            border: 1px solid var(--border-color);
+            font-size: 13px;
+            font-weight: 600;
+            box-shadow: var(--shadow-sm);
+        }
+        .app-shell {
+            position: relative;
+            z-index: 1;
+            padding-top: 54px;
+        }
+    </style>
+</head>
+<body class="dashboard-body">
+    <div class="page-link-bar">
+        <a href="LANDING_PREVIEW.html">Landing</a>
+        <a href="DASHBOARD_PREVIEW.html">Dashboard</a>
+        <a href="LOGIN_PREVIEW.html">Login</a>
+    </div>
+
+    <div class="app-shell">
+        <aside class="sidebar">
+            <div class="sidebar-top">
+                <a href="LANDING_PREVIEW.html" class="site-title brand-home-link brand-lockup" aria-label="RAGdoll home">
+                    <span class="brand-icon" style="display:grid;place-items:center;background:linear-gradient(135deg,var(--accent-primary),var(--accent-secondary));color:#fff;font-weight:800;">R</span>
+                    <span>RAGdoll</span>
+                </a>
+
+                <button class="new-chat-btn" type="button">
+                    <span class="left-icon" aria-hidden="true">○</span>
+                    <span>New chat</span>
+                    <span class="right-icon" aria-hidden="true">+</span>
+                </button>
+
+                <div class="past-chats">
+                    <h3>Past Chats</h3>
+                    <div class="chat-item active">
+                        <span class="gray-circle"></span>
+                        <span class="chat-item-title">Project kickoff notes</span>
+                    </div>
+                    <div class="chat-item">
+                        <span class="gray-circle"></span>
+                        <span class="chat-item-title">S3 ingestion checklist</span>
+                    </div>
+                    <div class="chat-item">
+                        <span class="gray-circle"></span>
+                        <span class="chat-item-title">Prompt tuning ideas</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-bottom">
+                <div class="user-profile">
+                    <div class="avatar">JR</div>
+                    <div class="user-info">
+                        <div class="user-name">John Roblox</div>
+                        <div class="user-tier">Free · ID 0</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <main class="main-area">
+            <header class="top-nav">
+                <div class="model-selector">
+                    <select aria-label="Select AI model">
+                        <option>Loading local models...</option>
+                    </select>
+                </div>
+                <button class="upgrade-btn" type="button">Upgrade</button>
+            </header>
+
+            <section class="chat-container" aria-label="Conversation">
+                <div class="conversation">
+                    <div class="message message-assistant">
+                        <div class="message-inner">
+                            <div class="message-avatar" aria-hidden="true">R</div>
+                            <div class="message-body">
+                                <div class="message-label">RAGdoll</div>
+                                <div class="message-bubble">
+                                    <p>Welcome back. I can help summarize your notes, draft replies, or explain the current project context.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="message message-user">
+                        <div class="message-inner">
+                            <div class="message-body">
+                                <div class="message-label">You</div>
+                                <div class="message-bubble">
+                                    <p>Show me the latest UI changes in a short summary.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <footer class="input-container">
+                <form class="input-box">
+                    <button class="plus-btn" type="button" aria-label="Attach a document">+</button>
+                    <textarea rows="1" placeholder="Message RAGdoll"></textarea>
+                    <button class="send-btn" type="submit" aria-label="Send message">↑</button>
+                </form>
+                <p class="input-hint">RAGdoll runs the selected GGUF model on your computer.</p>
+            </footer>
+        </main>
+    </div>
+</body>
+</html>

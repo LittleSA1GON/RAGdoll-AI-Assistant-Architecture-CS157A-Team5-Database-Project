@@ -161,7 +161,7 @@
                     <div class="welcome-state" id="welcome-state">
                         <div class="welcome-logo" aria-hidden="true">R</div>
                         <h1>How can I help you today?</h1>
-                        <p>Choose a local model and start a conversation.</p>
+                        <p>Choose a local model and start a conversation with your workspace.</p>
                     </div>
                 </div>
             </section>
