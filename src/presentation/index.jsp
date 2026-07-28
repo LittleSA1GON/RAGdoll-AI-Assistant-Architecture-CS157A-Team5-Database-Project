@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <title>RAGdoll AI - Home</title>
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/style.css?v=13">
 </head>
 <body class="landing-body">
     <nav class="landing-nav">
@@ -14,13 +14,12 @@
     
     <main class="hero-section">
         <div class="hero-content">
-            <span class="badge">Local-first AI workspace</span>
+            <img src="images/ragdoll-icon.png" alt="RAGdoll" class="hero-logo">
             <h1>RAGdoll AI Assistant</h1>
             <p>A minimal, clean, and scalable RAG based AI hosting framework.</p>
             
             <div class="hero-actions">
                 <a href="views/dashboard.jsp" class="btn-primary">Go to Dashboard</a>
-                <a href="#" class="btn-secondary">Learn More</a>
             </div>
 
             <div class="features">

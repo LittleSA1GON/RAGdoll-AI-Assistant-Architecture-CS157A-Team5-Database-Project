@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <title>Login - RAGdoll AI</title>
     <link rel="icon" type="image/png" href="../images/ragdoll-icon.png">
-    <link rel="stylesheet" href="../css/style.css?v=12">
+    <link rel="stylesheet" href="../css/style.css?v=13">
 </head>
 <body class="auth-body">
     <div class="auth-wrapper">
@@ -32,23 +32,6 @@
                 <button type="submit" class="auth-submit-btn">Continue</button>
             </form>
 
-            <div class="auth-footer">
-                <p><strong>Temporary test accounts</strong></p>
-                <p>Open the dashboard or admin document manager without entering credentials.</p>
-                <form action="dashboard.jsp" method="get">
-                    <input type="hidden" name="test_user" value="john_roblox">
-                    <button type="submit" class="auth-submit-btn">
-                        Continue as John Roblox
-                    </button>
-                </form>
-                <form action="admin.jsp" method="get">
-                    <input type="hidden" name="test_admin" value="jane_fortnite">
-                    <button type="submit" class="auth-submit-btn temporary-admin-btn">
-                        Continue as Jane Fortnite Admin
-                    </button>
-                </form>
-            </div>
-            
             <div class="auth-footer">
                 <p>Don't have an account? <a href="#">Sign up</a></p>
                 <p><a href="../index.jsp" class="back-link">← Back to Home</a></p>

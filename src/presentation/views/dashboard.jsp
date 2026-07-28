@@ -96,7 +96,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - RAGdoll AI Assistant</title>
     <link rel="icon" type="image/png" href="../images/ragdoll-icon.png">
-    <link rel="stylesheet" href="../css/style.css?v=12">
+    <link rel="stylesheet" href="../css/style.css?v=13">
 </head>
 <body class="dashboard-body">
     <div class="app-shell">
@@ -112,9 +112,8 @@
                 <% } %>
 
                 <button class="new-chat-btn" type="button">
-                    <span class="left-icon" aria-hidden="true">○</span>
+                    <span class="left-icon" aria-hidden="true">+</span>
                     <span>New chat</span>
-                    <span class="right-icon" aria-hidden="true">+</span>
                 </button>
 
                 <div class="past-chats">
