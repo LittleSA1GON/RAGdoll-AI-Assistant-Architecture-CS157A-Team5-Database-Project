@@ -780,8 +780,10 @@ class ConversationDatabase:
                         self._ensure_default_user_records(cursor)
                     self._verify_user(cursor, user_id)
 
-                    if conversation_id is None:
+                    is_new_conversation = conversation_id is None
+                    if is_new_conversation:
                         conversation_id = _next_id(cursor, "Conversations")
+                        conversation_title = self._title_from_query(query_text)
                         cursor.execute(
                             """
                             INSERT INTO Conversations
@@ -791,7 +793,7 @@ class ConversationDatabase:
                             (
                                 conversation_id,
                                 user_id,
-                                self._title_from_query(query_text),
+                                conversation_title,
                             ),
                         )
                         cursor.execute(
@@ -800,6 +802,12 @@ class ConversationDatabase:
                             VALUES (%s, %s)
                             """,
                             (user_id, conversation_id),
+                        )
+                        AdminControlDatabase._insert_audit(
+                            cursor,
+                            user_id,
+                            f"User created conversation '{conversation_title}'",
+                            "CREATE_CONVERSATION",
                         )
                     else:
                         self._verify_conversation(cursor, conversation_id, user_id)
@@ -835,6 +843,16 @@ class ConversationDatabase:
                         VALUES (%s, %s)
                         """,
                         (conversation_id, query_id),
+                    )
+                    query_summary = " ".join(query_text.strip().split())
+                    if len(query_summary) > 80:
+                        query_summary = query_summary[:77].rstrip() + "..."
+                    AdminControlDatabase._insert_audit(
+                        cursor,
+                        user_id,
+                        f"User submitted query: {query_summary}" if query_summary
+                        else "User submitted an empty query",
+                        "SUBMIT_QUERY",
                     )
                     cursor.execute(
                         """

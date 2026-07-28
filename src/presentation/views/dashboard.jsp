@@ -84,7 +84,7 @@
             <div class="sidebar-top">
                 <a href="<%= request.getContextPath() %>/index.jsp" class="site-title brand-home-link brand-lockup" aria-label="RAGdoll home">
                     <img src="<%= request.getContextPath() %>/images/ragdoll-icon.png" alt="" class="brand-icon">
-                    <span>RAGdoll</span>
+                    <span class="dash-logo">RAGdoll</span>
                 </a>
 
                 <% if (currentViewerIsAdmin) { %>

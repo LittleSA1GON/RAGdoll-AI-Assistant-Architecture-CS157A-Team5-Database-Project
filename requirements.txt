@@ -1,0 +1,9 @@
+fastapi>=0.111
+uvicorn[standard]>=0.30
+llama-cpp-python>=0.2.85
+sentence-transformers>=3.0
+numpy>=1.26
+mysql-connector-python>=8.4
+pypdf>=4.2
+python-docx>=1.1
+huggingface_hub>=0.24

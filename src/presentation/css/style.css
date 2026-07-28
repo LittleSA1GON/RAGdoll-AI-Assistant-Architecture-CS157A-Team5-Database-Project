@@ -86,7 +86,7 @@ button, input, select { font-family: inherit; color: inherit; outline: none; }
 }
 .brand-icon {
     flex: 0 0 auto;
-    width: 30px;
+    width: 30x;
     height: 30px;
     object-fit: contain;
     border-radius: 8px;
@@ -236,7 +236,7 @@ button, input, select { font-family: inherit; color: inherit; outline: none; }
 .hero-section::before { content: ""; position: absolute; top: -50%; right: -50%; width: 1000px; height: 1000px; background: radial-gradient(circle, rgba(215, 38, 93, 0.08) 0%, transparent 70%); border-radius: 50%; pointer-events: none; }
 .hero-section::after { content: ""; position: absolute; bottom: -50%; left: -50%; width: 800px; height: 800px; background: radial-gradient(circle, rgba(176, 42, 91, 0.08) 0%, transparent 70%); border-radius: 50%; pointer-events: none; }
 .hero-content { width: 100%; max-width: 900px; margin: 0 auto; position: relative; z-index: 1; text-align: center; }
-.hero-logo { display: block; width: 84px; height: 84px; margin: 0 auto 24px; object-fit: contain; }
+.hero-logo { display: block; width: 184px; height: 184px; margin: 0 auto 0px; object-fit: contain; }
 .hero-content h1 { font-family: "Anthropic Sans Display", Arial, sans-serif; font-size: 56px; font-weight: 700; margin-bottom: 20px; letter-spacing: -1.5px; line-height: 1.1; background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
 .hero-content p { font-size: 18px; color: var(--text-secondary); margin-bottom: 40px; line-height: 1.6; }
 .hero-actions { display: flex; gap: 16px; justify-content: center; margin-bottom: 60px; }
