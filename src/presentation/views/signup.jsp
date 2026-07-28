@@ -1,4 +1,20 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%!
+    private String escapeHtml(Object value) {
+        if (value == null) {
+            return "";
+        }
+        return String.valueOf(value)
+            .replace("&", "&amp;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+            .replace("\"", "&quot;")
+            .replace("'", "&#39;");
+    }
+%>
+<%
+    String errorMessage = (String) request.getAttribute("errorMessage");
+%>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -19,7 +35,11 @@
                 </a></p>
             </div>
 
-            <form action="#" method="POST" class="auth-form">
+            <% if (errorMessage != null) { %>
+            <div class="auth-message error"><%= escapeHtml(errorMessage) %></div>
+            <% } %>
+
+            <form action="<%= request.getContextPath() %>/auth?action=signup" method="POST" class="auth-form">
                 <div class="form-group">
                     <label for="username">Username</label>
                     <input
@@ -29,6 +49,8 @@
                         placeholder="Choose a username"
                         minlength="3"
                         maxlength="50"
+                        pattern="[A-Za-z0-9_]+"
+                        title="Letters, numbers, and underscores only"
                         autocomplete="username"
                         required>
                 </div>

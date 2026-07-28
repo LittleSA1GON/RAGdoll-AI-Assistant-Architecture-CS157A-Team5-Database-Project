@@ -27,22 +27,6 @@
     }
 %>
 <%
-    String testAdmin = request.getParameter("test_admin");
-
-    if ("jane_fortnite".equals(testAdmin)) {
-        session.removeAttribute("userId");
-        session.removeAttribute("userDisplayName");
-        session.removeAttribute("username");
-        session.removeAttribute("userTier");
-        session.removeAttribute("temporaryUser");
-        session.setAttribute("adminUserId", Integer.valueOf(20));
-        session.setAttribute("adminDisplayName", "Jane Fortnite Admin");
-        session.setAttribute("adminCompanyId", "RAGDOLL010");
-        session.setAttribute("temporaryAdmin", Boolean.TRUE);
-        response.sendRedirect(request.getContextPath() + "/views/admin.jsp");
-        return;
-    }
-
     Object adminUserIdValue = session.getAttribute("adminUserId");
     if (adminUserIdValue == null) {
         response.sendRedirect(request.getContextPath() + "/views/login.jsp?admin_required=true");
@@ -66,7 +50,6 @@
             ? session.getAttribute("adminCompanyId")
             : "RAGDOLL010"
     );
-    boolean temporaryAdmin = Boolean.TRUE.equals(session.getAttribute("temporaryAdmin"));
     String adminAvatarText = adminInitials(adminDisplayName);
 %>
 <!DOCTYPE html>
@@ -124,12 +107,13 @@
                 <div class="avatar"><%= escapeHtml(adminAvatarText) %></div>
                 <div class="user-info">
                     <div class="user-name"><%= escapeHtml(adminDisplayName) %></div>
-                    <div class="user-tier">
-                        Administrator · ID <%= adminUserId %>
-                        <% if (temporaryAdmin) { %> · Temporary<% } %>
-                    </div>
+                    <div class="user-tier">Administrator · ID <%= adminUserId %></div>
                 </div>
             </div>
+            <form action="<%= request.getContextPath() %>/auth" method="POST">
+                <input type="hidden" name="action" value="logout">
+                <button type="submit" class="sidebar-dashboard-link">Sign out</button>
+            </form>
         </div>
     </aside>
 

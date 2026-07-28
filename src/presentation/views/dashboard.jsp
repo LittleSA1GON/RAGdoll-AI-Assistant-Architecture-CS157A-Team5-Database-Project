@@ -27,20 +27,6 @@
     }
 %>
 <%
-    if ("john_roblox".equals(request.getParameter("test_user"))) {
-        session.removeAttribute("adminUserId");
-        session.removeAttribute("adminDisplayName");
-        session.removeAttribute("adminCompanyId");
-        session.removeAttribute("temporaryAdmin");
-        session.setAttribute("userId", Integer.valueOf(0));
-        session.setAttribute("userDisplayName", "John Roblox");
-        session.setAttribute("username", "john_roblox");
-        session.setAttribute("userTier", "Free");
-        session.setAttribute("temporaryUser", Boolean.TRUE);
-        response.sendRedirect(request.getContextPath() + "/views/dashboard.jsp");
-        return;
-    }
-
     Object sessionAdminId = session.getAttribute("adminUserId");
     boolean currentViewerIsAdmin = sessionAdminId != null;
     Object sessionUserId = currentViewerIsAdmin
@@ -48,24 +34,20 @@
         : session.getAttribute("userId");
 
     if (sessionUserId == null) {
-        session.setAttribute("userId", Integer.valueOf(0));
-        session.setAttribute("userDisplayName", "John Roblox");
-        session.setAttribute("username", "john_roblox");
-        session.setAttribute("userTier", "Free");
-        session.setAttribute("temporaryUser", Boolean.TRUE);
-        sessionUserId = Integer.valueOf(0);
+        response.sendRedirect(request.getContextPath() + "/views/login.jsp");
+        return;
     }
 
     int currentUserId;
     try {
         currentUserId = Integer.parseInt(String.valueOf(sessionUserId));
     } catch (NumberFormatException ignored) {
-        currentUserId = currentViewerIsAdmin ? 20 : 0;
+        response.sendRedirect(request.getContextPath() + "/views/login.jsp");
+        return;
     }
 
     String currentDisplayName;
     String currentTier;
-    boolean currentUserTemporary;
     if (currentViewerIsAdmin) {
         currentDisplayName = String.valueOf(
             session.getAttribute("adminDisplayName") != null
@@ -73,19 +55,17 @@
                 : "Administrator"
         );
         currentTier = "Administrator";
-        currentUserTemporary = Boolean.TRUE.equals(session.getAttribute("temporaryAdmin"));
     } else {
         currentDisplayName = String.valueOf(
             session.getAttribute("userDisplayName") != null
                 ? session.getAttribute("userDisplayName")
-                : "John Roblox"
+                : "User"
         );
         currentTier = String.valueOf(
             session.getAttribute("userTier") != null
                 ? session.getAttribute("userTier")
                 : "Free"
         );
-        currentUserTemporary = Boolean.TRUE.equals(session.getAttribute("temporaryUser"));
     }
     String currentInitials = userInitials(currentDisplayName);
 %>
@@ -132,16 +112,13 @@
                     <div class="avatar"><%= escapeHtml(currentInitials) %></div>
                     <div class="user-info">
                         <div class="user-name"><%= escapeHtml(currentDisplayName) %></div>
-                        <div class="user-tier">
-                            <%= escapeHtml(currentTier) %>
-                            <% if (currentUserTemporary) { %>
-                                · Temporary (ID <%= currentUserId %>)
-                            <% } else { %>
-                                · ID <%= currentUserId %>
-                            <% } %>
-                        </div>
+                        <div class="user-tier"><%= escapeHtml(currentTier) %> · ID <%= currentUserId %></div>
                     </div>
                 </div>
+                <form action="<%= request.getContextPath() %>/auth" method="POST">
+                    <input type="hidden" name="action" value="logout">
+                    <button type="submit" class="sidebar-dashboard-link">Sign out</button>
+                </form>
             </div>
         </aside>
 

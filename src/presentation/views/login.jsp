@@ -1,4 +1,21 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%!
+    private String escapeHtml(Object value) {
+        if (value == null) {
+            return "";
+        }
+        return String.valueOf(value)
+            .replace("&", "&amp;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+            .replace("\"", "&quot;")
+            .replace("'", "&#39;");
+    }
+%>
+<%
+    String errorMessage = (String) request.getAttribute("errorMessage");
+    boolean adminRequired = "true".equals(request.getParameter("admin_required"));
+%>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -18,7 +35,14 @@
                 </a> account</p>
             </div>
             
-            <form action="#" method="POST" class="auth-form">
+            <% if (adminRequired) { %>
+            <div class="auth-message error">Please log in with an administrator account to continue.</div>
+            <% } %>
+            <% if (errorMessage != null) { %>
+            <div class="auth-message error"><%= escapeHtml(errorMessage) %></div>
+            <% } %>
+
+            <form action="<%= request.getContextPath() %>/auth?action=login" method="POST" class="auth-form">
                 <div class="form-group">
                     <label for="email">Email address</label>
                     <input type="email" id="email" name="email" placeholder="name@example.com" required>
@@ -33,7 +57,7 @@
             </form>
 
             <div class="auth-footer">
-                <p>Don't have an account? <a href="#">Sign up</a></p>
+                <p>Don't have an account? <a href="signup.jsp">Sign up</a></p>
                 <p><a href="../index.jsp" class="back-link">← Back to Home</a></p>
             </div>
         </div>
