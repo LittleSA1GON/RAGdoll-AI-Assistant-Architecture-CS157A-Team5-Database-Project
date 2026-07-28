@@ -17,7 +17,7 @@ import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 
-/** Starts the local Python model API on the first dashboard or admin request. */
+// starts local model(s) if their not running
 public class LocalQueryStartupFilter implements Filter {
 
     private static final Object PROCESS_LOCK = new Object();
@@ -53,7 +53,7 @@ public class LocalQueryStartupFilter implements Filter {
         }
         chain.doFilter(request, response);
     }
-
+    // runs queries from jsps
     private void ensureLocalQueryRunning() throws IOException, InterruptedException {
         if (isServiceHealthy()) {
             return;

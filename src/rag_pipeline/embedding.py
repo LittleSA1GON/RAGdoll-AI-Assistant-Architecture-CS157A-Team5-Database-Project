@@ -1,8 +1,7 @@
 import os
 import sys
 
-# Prevent imported modules from writing bytecode when this module is used by a
-# Python entry point other than local_query.py.
+# llama setup stuff
 os.environ.setdefault("PYTHONDONTWRITEBYTECODE", "1")
 sys.dont_write_bytecode = True
 
@@ -14,7 +13,7 @@ from typing import Any, Iterable, List, Sequence
 
 try:
     import numpy as np
-except ImportError:  # A clear error is raised when embeddings are requested.
+except ImportError:  # an error is raised when embeddings are requested.
     np = None  # type: ignore[assignment]
 
 try:

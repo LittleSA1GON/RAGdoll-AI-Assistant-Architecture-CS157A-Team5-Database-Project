@@ -20,17 +20,20 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-/** Handles account creation, login, and logout for RAGdoll. */
+// le auth serverlet
 public class AuthServlet extends HttpServlet {
 
     private static final String DB_URL =
         "jdbc:mysql://localhost:3306/ragdoll_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC";
     private static final String DB_USER = "root";
+    // gets it from sys ENV
     private static final String DB_PASSWORD = System.getenv("DB_PASSWORD");
 
+    // got from google
     private static final Pattern USERNAME_PATTERN = Pattern.compile("^[A-Za-z0-9_]{3,50}$");
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
 
+    // i'm using a more advanced sha256 hashing algorithm so it needs these params
     private static final int PBKDF2_ITERATIONS = 120_000;
     private static final int KEY_LENGTH_BITS = 256;
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
@@ -77,7 +80,7 @@ public class AuthServlet extends HttpServlet {
         }
     }
 
-    // ---- Signup ----
+    // signup endpoint handleing
 
     private void handleSignup(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -273,7 +276,7 @@ public class AuthServlet extends HttpServlet {
         }
     }
 
-    // ---- Logout ----
+    // logout
 
     private void handleLogout(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
@@ -284,7 +287,7 @@ public class AuthServlet extends HttpServlet {
         response.sendRedirect(request.getContextPath() + "/views/login.jsp?status=signed_out");
     }
 
-    // ---- Helpers ----
+    // helper functions
 
     private void forwardWithError(
             HttpServletRequest request, HttpServletResponse response,
