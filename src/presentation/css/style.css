@@ -225,6 +225,7 @@ button, input, select { font-family: inherit; color: inherit; outline: none; }
 .back-link { display: inline-block; margin-top: 16px; font-size: 13px; font-weight: 400; color: var(--text-secondary); }
 .auth-message { margin-bottom: 20px; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; }
 .auth-message.error { background: #fdecea; color: #b3261e; border: 1px solid #f5c6c2; }
+.auth-message.info { background: #e9f6ff; color: #0b4f71; border: 1px solid #b7def8; }
 
 /* landing specific css */
 .landing-nav { display: flex; justify-content: space-between; align-items: center; padding: 24px 48px; border-bottom: 1px solid var(--border-color); background: linear-gradient(180deg, rgba(255,255,255,1) 0%, rgba(248,249,250,1) 100%); }

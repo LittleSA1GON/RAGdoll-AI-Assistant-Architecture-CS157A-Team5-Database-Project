@@ -44,7 +44,23 @@ public class AuthServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        handle(request, response);
+        String action = request.getParameter("action");
+        if ("logout".equals(action)) {
+            handleLogout(request, response);
+            return;
+        }
+
+        if ("signup".equals(action)) {
+            response.sendRedirect(request.getContextPath() + "/views/signup.jsp");
+            return;
+        }
+
+        if ("login".equals(action) && "true".equals(request.getParameter("admin_required"))) {
+            response.sendRedirect(request.getContextPath() + "/views/login.jsp?admin_required=true");
+            return;
+        }
+
+        response.sendRedirect(request.getContextPath() + "/views/login.jsp");
     }
 
     private void handle(HttpServletRequest request, HttpServletResponse response)
@@ -79,11 +95,20 @@ public class AuthServlet extends HttpServlet {
         try (Connection connection = getConnection()) {
             connection.setAutoCommit(false);
             try {
-                if (accountExists(connection, username, email)) {
+                AccountConflict conflict = getAccountConflict(connection, username, email);
+                if (conflict == AccountConflict.EMAIL) {
                     connection.rollback();
                     forwardWithError(
                         request, response, "/views/signup.jsp",
-                        "That username or email is already registered."
+                        "This email is already registered."
+                    );
+                    return;
+                }
+                if (conflict == AccountConflict.USERNAME) {
+                    connection.rollback();
+                    forwardWithError(
+                        request, response, "/views/signup.jsp",
+                        "That username is already taken."
                     );
                     return;
                 }
@@ -195,8 +220,13 @@ public class AuthServlet extends HttpServlet {
                 }
             }
 
-            if (userId == null || salt == null || !verifyPassword(password, salt, storedHash)) {
-                forwardWithError(request, response, "/views/login.jsp", "Incorrect email or password.");
+            if (userId == null) {
+                forwardWithError(request, response, "/views/login.jsp", "No account was found for that email.");
+                return;
+            }
+
+            if (salt == null || !verifyPassword(password, salt, storedHash)) {
+                forwardWithError(request, response, "/views/login.jsp", "Incorrect password.");
                 return;
             }
 
@@ -251,7 +281,7 @@ public class AuthServlet extends HttpServlet {
         if (session != null) {
             session.invalidate();
         }
-        response.sendRedirect(request.getContextPath() + "/views/login.jsp");
+        response.sendRedirect(request.getContextPath() + "/views/login.jsp?status=signed_out");
     }
 
     // ---- Helpers ----
@@ -272,14 +302,39 @@ public class AuthServlet extends HttpServlet {
         return DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
     }
 
-    private boolean accountExists(Connection connection, String username, String email)
+    private enum AccountConflict {
+        NONE,
+        USERNAME,
+        EMAIL
+    }
+
+    private AccountConflict getAccountConflict(Connection connection, String username, String email)
             throws SQLException {
         try (PreparedStatement statement = connection.prepareStatement(
-                "SELECT user_id FROM Users WHERE username = ? OR email = ?")) {
+                "SELECT username, email FROM Users WHERE username = ? OR email = ?")) {
             statement.setString(1, username);
             statement.setString(2, email);
             try (ResultSet resultSet = statement.executeQuery()) {
-                return resultSet.next();
+                boolean usernameTaken = false;
+                boolean emailTaken = false;
+                while (resultSet.next()) {
+                    String existingUsername = resultSet.getString("username");
+                    String existingEmail = resultSet.getString("email");
+                    if (existingUsername != null && existingUsername.equalsIgnoreCase(username)) {
+                        usernameTaken = true;
+                    }
+                    if (existingEmail != null && existingEmail.equalsIgnoreCase(email)) {
+                        emailTaken = true;
+                    }
+                }
+
+                if (emailTaken) {
+                    return AccountConflict.EMAIL;
+                }
+                if (usernameTaken) {
+                    return AccountConflict.USERNAME;
+                }
+                return AccountConflict.NONE;
             }
         }
     }

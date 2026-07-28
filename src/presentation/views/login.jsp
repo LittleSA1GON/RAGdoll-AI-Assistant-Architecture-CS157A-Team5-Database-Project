@@ -15,26 +15,30 @@
 <%
     String errorMessage = (String) request.getAttribute("errorMessage");
     boolean adminRequired = "true".equals(request.getParameter("admin_required"));
+    String status = request.getParameter("status");
 %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Login - RAGdoll AI</title>
-    <link rel="icon" type="image/png" href="../images/ragdoll-icon.png">
-    <link rel="stylesheet" href="../css/style.css?v=13">
+    <link rel="icon" type="image/png" href="<%= request.getContextPath() %>/images/ragdoll-icon.png">
+    <link rel="stylesheet" href="<%= request.getContextPath() %>/css/style.css?v=13">
 </head>
 <body class="auth-body">
     <div class="auth-wrapper">
         <div class="auth-card">
             <div class="auth-header">
                 <h2>Welcome back</h2>
-                <p>Log in to your <a href="../index.jsp" class="brand-inline-link brand-inline-lockup">
-                    <img src="../images/ragdoll-icon.png" alt="" class="brand-icon brand-icon-inline">
+                <p>Log in to your <a href="<%= request.getContextPath() %>/index.jsp" class="brand-inline-link brand-inline-lockup">
+                    <img src="<%= request.getContextPath() %>/images/ragdoll-icon.png" alt="" class="brand-icon brand-icon-inline">
                     <span>RAGdoll</span>
                 </a> account</p>
             </div>
             
+            <% if ("signed_out".equals(status)) { %>
+            <div class="auth-message info">You have been signed out.</div>
+            <% } %>
             <% if (adminRequired) { %>
             <div class="auth-message error">Please log in with an administrator account to continue.</div>
             <% } %>
@@ -58,7 +62,7 @@
 
             <div class="auth-footer">
                 <p>Don't have an account? <a href="signup.jsp">Sign up</a></p>
-                <p><a href="../index.jsp" class="back-link">← Back to Home</a></p>
+                <p><a href="<%= request.getContextPath() %>/index.jsp" class="back-link">← Back to Home</a></p>
             </div>
         </div>
     </div>

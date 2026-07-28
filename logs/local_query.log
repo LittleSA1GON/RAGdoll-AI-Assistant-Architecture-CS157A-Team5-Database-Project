@@ -710,3 +710,11 @@ Traceback (most recent call last):
   File "C:\Users\klopi\RAGdoll-AI-Assistant-Architecture-CS157A-Team5-Database-Project\src\rag_pipeline\local_query.py", line 18, in <module>
     from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 ModuleNotFoundError: No module named 'fastapi'
+Traceback (most recent call last):
+  File "C:\Users\klopi\RAGdoll-AI-Assistant-Architecture-CS157A-Team5-Database-Project\src\rag_pipeline\local_query.py", line 18, in <module>
+    from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+ModuleNotFoundError: No module named 'fastapi'
+Traceback (most recent call last):
+  File "C:\Users\klopi\RAGdoll-AI-Assistant-Architecture-CS157A-Team5-Database-Project\src\rag_pipeline\local_query.py", line 18, in <module>
+    from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+ModuleNotFoundError: No module named 'fastapi'

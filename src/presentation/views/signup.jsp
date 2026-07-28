@@ -21,16 +21,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign up - RAGdoll AI</title>
-    <link rel="icon" type="image/png" href="../images/ragdoll-icon.png">
-    <link rel="stylesheet" href="../css/style.css?v=13">
+    <link rel="icon" type="image/png" href="<%= request.getContextPath() %>/images/ragdoll-icon.png">
+    <link rel="stylesheet" href="<%= request.getContextPath() %>/css/style.css?v=13">
 </head>
 <body class="auth-body">
     <div class="auth-wrapper">
         <div class="auth-card">
             <div class="auth-header">
                 <h2>Create your account</h2>
-                <p>Sign up for <a href="../index.jsp" class="brand-inline-link brand-inline-lockup">
-                    <img src="../images/ragdoll-icon.png" alt="" class="brand-icon brand-icon-inline">
+                <p>Sign up for <a href="<%= request.getContextPath() %>/index.jsp" class="brand-inline-link brand-inline-lockup">
+                    <img src="<%= request.getContextPath() %>/images/ragdoll-icon.png" alt="" class="brand-icon brand-icon-inline">
                     <span>RAGdoll</span>
                 </a></p>
             </div>
@@ -38,8 +38,9 @@
             <% if (errorMessage != null) { %>
             <div class="auth-message error"><%= escapeHtml(errorMessage) %></div>
             <% } %>
+            <div class="auth-message error" id="client-signup-error" hidden></div>
 
-            <form action="<%= request.getContextPath() %>/auth?action=signup" method="POST" class="auth-form">
+            <form action="<%= request.getContextPath() %>/auth?action=signup" method="POST" class="auth-form" id="signup-form">
                 <div class="form-group">
                     <label for="username">Username</label>
                     <input
@@ -95,9 +96,51 @@
 
             <div class="auth-footer">
                 <p>Already have an account? <a href="login.jsp">Log in</a></p>
-                <p><a href="../index.jsp" class="back-link">← Back to Home</a></p>
+                <p><a href="<%= request.getContextPath() %>/index.jsp" class="back-link">← Back to Home</a></p>
             </div>
         </div>
     </div>
+    <script>
+        (function () {
+            const form = document.getElementById("signup-form");
+            const passwordInput = document.getElementById("password");
+            const confirmInput = document.getElementById("confirm-password");
+            const status = document.getElementById("client-signup-error");
+
+            function showStatus(message) {
+                status.textContent = message;
+                status.hidden = false;
+            }
+
+            function clearStatus() {
+                status.textContent = "";
+                status.hidden = true;
+            }
+
+            form.addEventListener("submit", function (event) {
+                const password = passwordInput.value || "";
+                const confirm = confirmInput.value || "";
+
+                if (password !== confirm) {
+                    event.preventDefault();
+                    showStatus("Passwords do not match.");
+                    window.alert("Passwords do not match.");
+                    confirmInput.focus();
+                    return;
+                }
+
+                clearStatus();
+            });
+
+            confirmInput.addEventListener("input", function () {
+                if (status.hidden) {
+                    return;
+                }
+                if (passwordInput.value === confirmInput.value) {
+                    clearStatus();
+                }
+            });
+        })();
+    </script>
 </body>
 </html>
