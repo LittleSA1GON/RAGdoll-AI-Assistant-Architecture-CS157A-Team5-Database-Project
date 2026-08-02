@@ -61,7 +61,7 @@
             </form>
 
             <div class="auth-footer">
-                <p>Don't have an account? <a href="signup.jsp">Sign up</a></p>
+                <p>Don't have an account? <a href="<%= request.getContextPath() %>/auth?action=signup">Sign up</a></p>
                 <p><a href="<%= request.getContextPath() %>/index.jsp" class="back-link">← Back to Home</a></p>
             </div>
         </div>

@@ -246,7 +246,7 @@
 </div>
 
 <script>
-    const API_BASE_URL = window.RAGDOLL_API_URL || "http://127.0.0.1:8000";
+    const API_BASE_URL = "<%= request.getContextPath() %>";
     const pageRoot = document.querySelector(".admin-tabs-page");
     const ADMIN_USER_ID = Number(pageRoot.dataset.adminUserId);
     const moneyFormatter = new Intl.NumberFormat("en-US", {

@@ -164,7 +164,7 @@
     </div>
 
     <script>
-        const API_BASE_URL = window.RAGDOLL_API_URL || "http://127.0.0.1:8000";
+        const API_BASE_URL = "<%= request.getContextPath() %>";
         const userProfile = document.querySelector(".user-profile");
         const CURRENT_USER_ID = userProfile
             ? Number(userProfile.dataset.userId)
@@ -753,7 +753,7 @@
                 addMessage(
                     "assistant",
                     "**Unable to connect to the local model service.**\n\n" +
-                    error.message + "\n\nCheck `logs/local_query.log`. You can still use `run_local_query.bat` as a manual fallback.",
+                    error.message + "\n\nCheck `logs/model_worker.log`.",
                     "error-message"
                 );
             }

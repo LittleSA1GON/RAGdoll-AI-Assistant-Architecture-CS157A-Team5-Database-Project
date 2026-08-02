@@ -95,7 +95,7 @@
             </form>
 
             <div class="auth-footer">
-                <p>Already have an account? <a href="login.jsp">Log in</a></p>
+                <p>Already have an account? <a href="<%= request.getContextPath() %>/auth?action=login">Log in</a></p>
                 <p><a href="<%= request.getContextPath() %>/index.jsp" class="back-link">← Back to Home</a></p>
             </div>
         </div>

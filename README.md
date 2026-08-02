@@ -10,7 +10,7 @@
 
 ## Setup
 1. Run MySQL Server
-2. Open MySQL Workbench and click File > Run SQL Script, and select `(this directory)/database/schema.sql`, and run it
+2. In MySQL Workbench, click File > Run SQL Script, select `(this directory)/database/database.sql`, and run it.
 3. Set DB_PASSWORD to **your sql password** in System Enviorment Variables
 4. Open `(tomcat root directory)/conf/catalina/localhost`
 5. Create `RAGdoll.xml` and fill it with

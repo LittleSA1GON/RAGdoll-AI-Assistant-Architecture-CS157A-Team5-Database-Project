@@ -1,309 +1,178 @@
+"""Local Sentence Transformer wrapper.
+
+This module loads one locally configured text-embedding model at a time. It does
+not assume a specific model name, directory name, or query instruction.
+"""
+
+import json
 import os
-import sys
-
-# llama setup stuff
-os.environ.setdefault("PYTHONDONTWRITEBYTECODE", "1")
-sys.dont_write_bytecode = True
-
-import re
 import threading
-from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable, List, Sequence
-
-try:
-    import numpy as np
-except ImportError:  # an error is raised when embeddings are requested.
-    np = None  # type: ignore[assignment]
+from typing import Any, Sequence
 
 try:
     import torch
-except ImportError:
-    torch = None  # type: ignore[assignment]
-
-try:
     from sentence_transformers import SentenceTransformer
 except ImportError:
-    SentenceTransformer = None  # type: ignore[assignment,misc]
+    torch = None
+    SentenceTransformer = None
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_MODEL_DIRECTORY = PROJECT_ROOT / "models" / "embedding" / "bge-base-en-v1.5"
-EMBEDDING_MODEL_DIRECTORY = Path(
-    os.getenv("RAGDOLL_EMBEDDING_MODEL_DIR", str(DEFAULT_MODEL_DIRECTORY))
-).expanduser().resolve()
-EMBEDDING_MODEL_NAME = (
-    os.getenv("RAGDOLL_EMBEDDING_MODEL_NAME", "BAAI/bge-base-en-v1.5").strip()
-    or "BAAI/bge-base-en-v1.5"
-)
-
-DEFAULT_QUERY_PREFIX = "Represent this sentence for searching relevant passages: "
-QUERY_PREFIX = os.getenv("RAGDOLL_EMBEDDING_QUERY_PREFIX", DEFAULT_QUERY_PREFIX)
-CHUNK_WORDS = max(40, int(os.getenv("RAGDOLL_CHUNK_WORDS", "180")))
-CHUNK_OVERLAP_WORDS = max(0, int(os.getenv("RAGDOLL_CHUNK_OVERLAP_WORDS", "30")))
-EMBEDDING_BATCH_SIZE = max(1, int(os.getenv("RAGDOLL_EMBEDDING_BATCH_SIZE", "16")))
-
-SUPPORTED_EXTENSIONS = {".pdf", ".txt", ".md", ".docx"}
+MODEL_ROOT = Path(
+    os.getenv(
+        "RAGDOLL_EMBEDDING_MODEL_DIR",
+        PROJECT_ROOT / "models" / "embedding",
+    )
+).resolve()
+QUERY_PREFIX = os.getenv("RAGDOLL_EMBEDDING_QUERY_PREFIX", "")
+DOCUMENT_PREFIX = os.getenv("RAGDOLL_EMBEDDING_DOCUMENT_PREFIX", "")
 
 
-class EmbeddingConfigurationError(RuntimeError):
-    """Raised when the local embedding runtime is not ready."""
+def clean_text(value: object) -> str:
+    """Replace invalid lone surrogate code points before model tokenization."""
+    return "".join(
+        "\ufffd" if 0xD800 <= ord(character) <= 0xDFFF else character
+        for character in str(value)
+    )
 
 
-class DocumentExtractionError(RuntimeError):
-    """Raised when text cannot be extracted from an uploaded document."""
+def is_model_directory(path: Path) -> bool:
+    """Recognize common local Sentence Transformer directory layouts."""
+    return path.is_dir() and (
+        (path / "modules.json").is_file()
+        or (path / "config.json").is_file()
+        or (path / "config_sentence_transformers.json").is_file()
+    )
 
 
-@dataclass(frozen=True)
-class PreparedDocument:
-    text: str
-    chunks: List[str]
-    embeddings: List[List[float]]
-    embedding_dimension: int
-    embedding_model_name: str
-    model_directory: str
+def read_model_name(path: Path) -> str:
+    """Read a model identifier from local metadata when one is available."""
+    config_files = (
+        path / "config_sentence_transformers.json",
+        path / "config.json",
+        path / "0_Transformer" / "config.json",
+    )
+    for config_file in config_files:
+        if not config_file.is_file():
+            continue
+        try:
+            values = json.loads(config_file.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        for key in ("model_name", "_name_or_path", "name_or_path"):
+            value = str(values.get(key, "")).strip()
+            if not value:
+                continue
+            candidate = Path(value)
+            if candidate.is_absolute() or candidate.exists():
+                return candidate.name or path.name
+            return value
+    return path.name or str(path)
 
 
-class LocalSentenceEmbedder:
-    """Lazy, thread-safe wrapper around a local SentenceTransformer model."""
+def resolve_model_directory() -> Path:
+    """Select one local embedding model without assuming a model name."""
+    configured = os.getenv("RAGDOLL_EMBEDDING_MODEL_DIR", "").strip()
+    if configured:
+        return MODEL_ROOT
 
-    def __init__(self, model_directory: Path = EMBEDDING_MODEL_DIRECTORY) -> None:
-        self.model_directory = model_directory
+    if is_model_directory(MODEL_ROOT):
+        return MODEL_ROOT
+
+    if not MODEL_ROOT.is_dir():
+        return MODEL_ROOT
+
+    candidates = sorted(
+        path.resolve()
+        for path in MODEL_ROOT.iterdir()
+        if is_model_directory(path)
+    )
+    if len(candidates) == 1:
+        return candidates[0]
+    if len(candidates) > 1:
+        raise RuntimeError(
+            "Multiple embedding models were found. Keep one model under "
+            f"{MODEL_ROOT} or set RAGDOLL_EMBEDDING_MODEL_DIR."
+        )
+    return MODEL_ROOT
+
+
+class Embedder:
+    """Load one local Sentence Transformer and reuse it for every request."""
+
+    def __init__(self) -> None:
         self._model: Any = None
-        self._load_lock = threading.Lock()
-        self._encode_lock = threading.Lock()
+        self._model_directory: Path | None = None
+        self._lock = threading.Lock()
 
-    def _resolve_device(self) -> str:
+    @property
+    def model_directory(self) -> Path:
+        if self._model_directory is None:
+            self._model_directory = resolve_model_directory()
+        return self._model_directory
+
+    @property
+    def model_name(self) -> str:
+        return read_model_name(self.model_directory)
+
+    def _device(self) -> str:
         configured = os.getenv("RAGDOLL_EMBEDDING_DEVICE", "").strip()
         if configured:
             return configured
-        if torch is not None and bool(torch.cuda.is_available()):
-            return "cuda"
-        return "cpu"
+        return "cuda" if torch is not None and torch.cuda.is_available() else "cpu"
 
-    def _model_kwargs(self) -> dict[str, Any]:
-        requested_dtype = os.getenv("RAGDOLL_EMBEDDING_DTYPE", "").strip().lower()
-        if not requested_dtype or torch is None:
-            return {}
-
-        supported = {
-            "float16": torch.float16,
-            "fp16": torch.float16,
-            "float32": torch.float32,
-            "fp32": torch.float32,
-            "bfloat16": torch.bfloat16,
-            "bf16": torch.bfloat16,
-        }
-        if requested_dtype not in supported:
-            raise EmbeddingConfigurationError(
-                "RAGDOLL_EMBEDDING_DTYPE must be float16, float32, or bfloat16."
-            )
-        return {"torch_dtype": supported[requested_dtype]}
-
-    def _validate_model_directory(self) -> None:
-        if not self.model_directory.is_dir():
-            raise EmbeddingConfigurationError(
-                "The local embedding model directory was not found: "
-                f"{self.model_directory}. Download the complete "
-                "BAAI/bge-base-en-v1.5 repository into that folder or set "
-                "RAGDOLL_EMBEDDING_MODEL_DIR."
-            )
-        if not (self.model_directory / "config.json").is_file():
-            raise EmbeddingConfigurationError(
-                f"{self.model_directory} is missing config.json. Download the "
-                "complete Hugging Face repository, not only model.safetensors."
-            )
-
-    def get_model(self) -> Any:
+    def _load(self) -> Any:
         if self._model is not None:
             return self._model
-
-        with self._load_lock:
+        with self._lock:
             if self._model is not None:
                 return self._model
             if SentenceTransformer is None:
-                raise EmbeddingConfigurationError(
-                    "sentence-transformers is not installed. Run "
-                    "python -m pip install -r requirements.txt."
+                raise RuntimeError("sentence-transformers is not installed")
+            if not is_model_directory(self.model_directory):
+                raise RuntimeError(
+                    "Sentence Transformer files were not found in "
+                    f"{self.model_directory}"
                 )
-            if np is None:
-                raise EmbeddingConfigurationError(
-                    "numpy is not installed. Run python -m pip install -r requirements.txt."
-                )
-
-            self._validate_model_directory()
             self._model = SentenceTransformer(
                 str(self.model_directory),
-                device=self._resolve_device(),
+                device=self._device(),
                 local_files_only=True,
-                model_kwargs=self._model_kwargs(),
             )
             return self._model
 
-    def encode(self, texts: Sequence[str], *, is_query: bool = False) -> List[List[float]]:
-        cleaned = [normalize_text(text) for text in texts]
-        if any(not text for text in cleaned):
-            raise ValueError("Embedding input cannot be empty.")
-        if is_query and QUERY_PREFIX:
-            cleaned = [QUERY_PREFIX + text for text in cleaned]
+    def encode(self, texts: Sequence[str], query: bool = False) -> list[list[float]]:
+        cleaned = [" ".join(clean_text(text).split()) for text in texts]
+        if not cleaned or any(not text for text in cleaned):
+            raise ValueError("Embedding text cannot be empty")
 
-        model = self.get_model()
-        with self._encode_lock:
-            vectors = model.encode(
-                cleaned,
-                batch_size=EMBEDDING_BATCH_SIZE,
-                convert_to_numpy=True,
-                normalize_embeddings=True,
-                show_progress_bar=False,
-            )
+        prefix = QUERY_PREFIX if query else DOCUMENT_PREFIX
+        if prefix:
+            cleaned = [prefix + text for text in cleaned]
+
+        vectors = self._load().encode(
+            cleaned,
+            batch_size=int(os.getenv("RAGDOLL_EMBEDDING_BATCH_SIZE", "16")),
+            convert_to_numpy=True,
+            normalize_embeddings=True,
+            show_progress_bar=False,
+        )
         return vectors.astype("float32").tolist()
 
-    def status(self) -> dict[str, Any]:
-        directory_exists = self.model_directory.is_dir()
-        model_loaded = self._model is not None
+    def status(self) -> dict[str, object]:
+        directory = self.model_directory
         return {
-            "model_name": EMBEDDING_MODEL_NAME,
-            "model_directory": str(self.model_directory),
-            "directory_exists": directory_exists,
-            "config_present": (self.model_directory / "config.json").is_file(),
-            "model_loaded": model_loaded,
-            "device": self._resolve_device(),
+            "model_name": self.model_name,
+            "model_directory": str(directory),
+            "directory_exists": directory.is_dir(),
+            "model_files_present": is_model_directory(directory),
+            "model_loaded": self._model is not None,
+            "device": self._device(),
             "offline_only": True,
-            "supported_extensions": sorted(SUPPORTED_EXTENSIONS),
+            "query_prefix_configured": bool(QUERY_PREFIX),
+            "document_prefix_configured": bool(DOCUMENT_PREFIX),
         }
 
 
-EMBEDDER = LocalSentenceEmbedder()
-
-
-def normalize_text(text: str) -> str:
-    """Normalize whitespace while retaining paragraph boundaries."""
-
-    text = str(text or "").replace("\x00", " ").replace("\r\n", "\n")
-    paragraphs = []
-    for paragraph in re.split(r"\n\s*\n", text):
-        cleaned = re.sub(r"[\t ]+", " ", paragraph)
-        cleaned = re.sub(r"\s*\n\s*", " ", cleaned).strip()
-        if cleaned:
-            paragraphs.append(cleaned)
-    return "\n\n".join(paragraphs)
-
-
-def chunk_text(
-    text: str,
-    *,
-    chunk_words: int = CHUNK_WORDS,
-    overlap_words: int = CHUNK_OVERLAP_WORDS,
-) -> List[str]:
-    """Split text into overlapping, retrieval-sized word chunks."""
-
-    normalized = normalize_text(text)
-    words = normalized.split()
-    if not words:
-        return []
-
-    chunk_words = max(20, chunk_words)
-    overlap_words = min(max(0, overlap_words), chunk_words - 1)
-    step = chunk_words - overlap_words
-
-    chunks: List[str] = []
-    for start in range(0, len(words), step):
-        chunk = " ".join(words[start : start + chunk_words]).strip()
-        if chunk:
-            chunks.append(chunk)
-        if start + chunk_words >= len(words):
-            break
-    return chunks
-
-
-def _extract_pdf(path: Path) -> str:
-    try:
-        from pypdf import PdfReader
-    except ImportError as error:
-        raise DocumentExtractionError(
-            "pypdf is required for PDF uploads. Install requirements.txt."
-        ) from error
-
-    try:
-        reader = PdfReader(str(path))
-        pages = [(page.extract_text() or "").strip() for page in reader.pages]
-    except Exception as error:
-        raise DocumentExtractionError(f"Unable to read PDF: {error}") from error
-    return "\n\n".join(page for page in pages if page)
-
-
-def _extract_docx(path: Path) -> str:
-    try:
-        from docx import Document
-    except ImportError as error:
-        raise DocumentExtractionError(
-            "python-docx is required for DOCX uploads. Install requirements.txt."
-        ) from error
-
-    try:
-        document = Document(str(path))
-        blocks = [paragraph.text for paragraph in document.paragraphs if paragraph.text.strip()]
-        for table in document.tables:
-            for row in table.rows:
-                cells = [cell.text.strip() for cell in row.cells if cell.text.strip()]
-                if cells:
-                    blocks.append(" | ".join(cells))
-    except Exception as error:
-        raise DocumentExtractionError(f"Unable to read DOCX: {error}") from error
-    return "\n\n".join(blocks)
-
-
-def extract_document_text(path: Path) -> str:
-    """Extract normalized text from a supported local document."""
-
-    extension = path.suffix.lower()
-    if extension not in SUPPORTED_EXTENSIONS:
-        allowed = ", ".join(sorted(SUPPORTED_EXTENSIONS))
-        raise DocumentExtractionError(
-            f"Unsupported document type {extension or '(none)'}. Allowed: {allowed}."
-        )
-
-    if extension == ".pdf":
-        text = _extract_pdf(path)
-    elif extension == ".docx":
-        text = _extract_docx(path)
-    else:
-        try:
-            text = path.read_text(encoding="utf-8-sig")
-        except UnicodeDecodeError:
-            text = path.read_text(encoding="latin-1")
-        except OSError as error:
-            raise DocumentExtractionError(f"Unable to read document: {error}") from error
-
-    normalized = normalize_text(text)
-    if not normalized:
-        raise DocumentExtractionError(
-            "No extractable text was found. Scanned/image-only PDFs require OCR, "
-            "which is not enabled in this project."
-        )
-    return normalized
-
-
-def embed_documents(texts: Sequence[str]) -> List[List[float]]:
-    return EMBEDDER.encode(texts, is_query=False)
-
-
-def embed_query(text: str) -> List[float]:
-    return EMBEDDER.encode([text], is_query=True)[0]
-
-
-def prepare_document(path: Path) -> PreparedDocument:
-    text = extract_document_text(path)
-    chunks = chunk_text(text)
-    if not chunks:
-        raise DocumentExtractionError("The document did not produce any chunks.")
-    embeddings = embed_documents(chunks)
-    dimension = len(embeddings[0]) if embeddings else 0
-    return PreparedDocument(
-        text=text,
-        chunks=chunks,
-        embeddings=embeddings,
-        embedding_dimension=dimension,
-        embedding_model_name=EMBEDDING_MODEL_NAME,
-        model_directory=str(EMBEDDER.model_directory),
-    )
+EMBEDDER = Embedder()
