@@ -587,7 +587,7 @@ final class PythonModelClient implements AutoCloseable
             String line = output.readLine();
             if (line == null)
             {
-                throw new IOException("The Python model worker stopped. Check logs/model_worker.log.");
+                throw new IOException("The Python model worker stopped unexpectedly.");
             }
             Map<String, Object> response = Json.object(line);
             if (!(response.get("id") instanceof Number responseId) || responseId.longValue() != id)
@@ -682,15 +682,14 @@ final class PythonModelClient implements AutoCloseable
         {
             throw new IOException("Python worker was not found: " + script);
         }
-        Path log = root.resolve("logs/model_worker.log");
-        Files.createDirectories(log.getParent());
+        
 
         List<String> command = new ArrayList<>(Config.pythonCommand());
         command.add("-B");
         command.add(script.toString());
         ProcessBuilder builder = new ProcessBuilder(command).directory(root.toFile());
         builder.environment().put("PYTHONDONTWRITEBYTECODE", "1");
-        builder.redirectError(ProcessBuilder.Redirect.appendTo(log.toFile()));
+        builder.redirectError(ProcessBuilder.Redirect.INHERIT);
         process = builder.start();
         input = new BufferedWriter(new OutputStreamWriter(process.getOutputStream(), StandardCharsets.UTF_8));
         output = new BufferedReader(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8));
