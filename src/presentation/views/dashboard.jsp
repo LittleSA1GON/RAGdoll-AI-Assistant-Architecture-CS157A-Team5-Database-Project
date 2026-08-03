@@ -753,7 +753,7 @@
                 addMessage(
                     "assistant",
                     "**Unable to connect to the local model service.**\n\n" +
-                    error.message + "\n\nCheck `logs/model_worker.log`.",
+                    error.message,
                     "error-message"
                 );
             }

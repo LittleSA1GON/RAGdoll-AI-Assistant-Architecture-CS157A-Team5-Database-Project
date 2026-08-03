@@ -4,7 +4,6 @@ import json
 import os
 import sys
 import threading
-import traceback
 from pathlib import Path
 from typing import Any
 
@@ -86,23 +85,10 @@ class LlamaRunner:
             raise RuntimeError("llama-cpp-python is not installed")
 
         gpu_layers = int(os.getenv("LLAMA_N_GPU_LAYERS", "-1"))
-        if gpu_layers == 0:
-            raise RuntimeError(
-                "GPU offloading is disabled because LLAMA_N_GPU_LAYERS is 0."
-            )
-        if not self._gpu_offload_supported():
-            raise RuntimeError(
-                "The installed llama-cpp-python build does not support GPU "
-                "offloading. Install a CUDA-enabled build."
-            )
+        gpu_available = gpu_layers != 0 and self._gpu_offload_supported()
 
         if self._model is None or self._path != path:
             self._close_model()
-            print(
-                f"Loading {path.name} with {gpu_layers} GPU layers.",
-                file=sys.stderr,
-                flush=True,
-            )
             self._model = Llama(
                 model_path=str(path),
                 n_ctx=int(os.getenv("LLAMA_N_CTX", "2048")),
@@ -114,7 +100,7 @@ class LlamaRunner:
                         str(max(1, (os.cpu_count() or 2) // 2)),
                     )
                 ),
-                n_gpu_layers=gpu_layers,
+                n_gpu_layers=gpu_layers if gpu_available else 0,
                 main_gpu=int(os.getenv("LLAMA_MAIN_GPU", "0")),
                 offload_kqv=True,
                 use_mmap=True,
@@ -210,7 +196,6 @@ def main() -> None:
                 "result": clean_value(handle(request)),
             }
         except Exception as error:
-            traceback.print_exc(file=sys.stderr)
             response = {
                 "id": request_id,
                 "ok": False,
