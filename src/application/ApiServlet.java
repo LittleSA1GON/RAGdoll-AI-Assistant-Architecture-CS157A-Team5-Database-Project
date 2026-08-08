@@ -19,6 +19,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import javax.servlet.http.Part;
 
 /** Same-origin JSON API for model execution and administrator capabilities. */
@@ -134,6 +135,15 @@ public final class ApiServlet extends HttpServlet
                     throw new IllegalArgumentException("tier_id is required.");
                 }
                 result = AppServices.PAYMENT.upgradeTier(currentUser(request), ((Number) tierIdValue).intValue());
+                HttpSession session = request.getSession(false);
+                if (session != null && result instanceof Map<?, ?> upgradedTier)
+                {
+                    Object tierName = upgradedTier.get("tier_name");
+                    if (tierName != null)
+                    {
+                        session.setAttribute("userTier", String.valueOf(tierName));
+                    }
+                }
             }
             else
             {
