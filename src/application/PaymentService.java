@@ -182,8 +182,8 @@ final class PaymentRepository
     private Map<String, Object> currentTier(Connection connection, int userId) throws SQLException
     {
         try (PreparedStatement statement = connection.prepareStatement(
-                "SELECT t.tier_id, t.tier_name, t.price FROM Has h JOIN Tiers t ON t.tier_id = h.tier_id "
-                        + "WHERE h.user_id = ? ORDER BY h.assigned_at DESC LIMIT 1"))
+            "SELECT t.tier_id, t.tier_name, t.price FROM Payments p JOIN Tiers t ON t.tier_id = p.tier_id "
+                + "WHERE p.user_id = ? ORDER BY p.payment_date DESC, p.payment_id DESC LIMIT 1"))
         {
             statement.setInt(1, userId);
             try (ResultSet rows = statement.executeQuery())
