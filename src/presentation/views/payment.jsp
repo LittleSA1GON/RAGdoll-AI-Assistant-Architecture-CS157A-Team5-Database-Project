@@ -46,7 +46,7 @@
     <link rel="icon" type="image/png" href="../images/ragdoll-icon.png">
     <link rel="stylesheet" href="../css/style.css?v=13">
 </head>
-<body class="dashboard-body">
+<body class="dashboard-body payment-body">
     <div class="app-shell">
         <aside class="sidebar">
             <div class="sidebar-top">
