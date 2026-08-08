@@ -129,7 +129,7 @@
                         <option value="">Loading local models...</option>
                     </select>
                 </div>
-                <button class="upgrade-btn" type="button">Upgrade</button>
+                <button id="upgrade-button" class="upgrade-btn" type="button" onclick="window.location.href='<%= request.getContextPath() %>/views/payment.jsp'">Upgrade</button>
             </header>
 
             <section class="chat-container empty-state" id="chat-container" aria-label="Conversation">

@@ -1,1 +1,9 @@
 /models
+
+# Local helper and environment files
+.scripts/
+.venv/
+RAGdoll.xml
+deploy_to_tomcat.ps1
+*.env
+.env

@@ -121,6 +121,20 @@ public final class ApiServlet extends HttpServlet
                 download(request, response, integer(parts.get(2)));
                 return;
             }
+            else if (path.equals("/payments/tiers") && method.equals("GET"))
+            {
+                result = AppServices.PAYMENT.userTiers(currentUser(request));
+            }
+            else if (path.equals("/payments/upgrade") && method.equals("POST"))
+            {
+                Map<String, Object> values = body(request);
+                Object tierIdValue = values.get("tier_id");
+                if (!(tierIdValue instanceof Number))
+                {
+                    throw new IllegalArgumentException("tier_id is required.");
+                }
+                result = AppServices.PAYMENT.upgradeTier(currentUser(request), ((Number) tierIdValue).intValue());
+            }
             else
             {
                 send(response, 404, Map.of("detail", "API route not found: " + method + " " + path));
@@ -313,6 +327,7 @@ final class AppServices
     static final RagService RAG = new RagService(PYTHON);
     static final ChatService CHAT = new ChatService(MODELS, CONVERSATIONS, RAG, PYTHON);
     static final AdminService ADMIN = new AdminService(PYTHON);
+    static final PaymentService PAYMENT = new PaymentService();
 
     private AppServices()
     {
