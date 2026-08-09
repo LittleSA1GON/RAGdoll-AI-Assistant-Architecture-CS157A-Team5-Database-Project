@@ -289,6 +289,7 @@ INSERT INTO `Users` VALUES
 (8, 'mariag', 'maria.garcia@example.com', '2026-07-01 10:35:00'),
 (9, 'omarh', 'omar.hassan@example.com', '2026-07-01 10:40:00'),
 (10, 'lisaw', 'lisa.wilson@example.com', '2026-07-01 10:45:00'),
+(11, 'admin_alex', 'alex.admin@ragdoll.local', '2026-07-01 09:00:00'),
 (12, 'admin_blake', 'blake.admin@ragdoll.local', '2026-07-01 09:05:00'),
 (13, 'admin_casey', 'casey.admin@ragdoll.local', '2026-07-01 09:10:00'),
 (14, 'admin_devon', 'devon.admin@ragdoll.local', '2026-07-01 09:15:00'),
@@ -311,6 +312,7 @@ INSERT INTO `User_Hashes` VALUES
 (8, '79b7ee15434a2901a95982387862a828b56262800c19296a37beced3ccf70c1b', '69a75896b80310845bbcd00a0c712715'),
 (9, '20256c50e60ae2e03d7f2d346979df2b790331af132a2cdaa9688e0a76d4cf5e', '9dfbc62c83daf3a142ffdac1158fab56'),
 (10, 'afb359c0410c386614e3c55d766ebc8951c362ea2d83c8f0bc82df3bfca5fbea', 'c96696341d7b6f56c8678b3c8360f3c1'),
+(11, '75597589dff462e95e8a6ea3c510e7c1d061132e439d05a6fb424bba8599ecc8', 'a1b2c3d4e5f60718293a4b5c6d7e8f90'),
 (12, 'aa17e9453d8f24e69d036b06e610a810e0d5d02a6d676c027b9b5326c15fd3da', 'a9302cac41e563be98503f73a0b36bfa'),
 (13, '92feb87c4dc833af6c2b82d8e2d1eed14d2bf67810500cae27156f782fa603ad', '7723846e018f1c45dd2f58745b64a256'),
 (14, 'c517f7b5d439f3019009bf366a60f4a7f80296f043c1024574b0b11b062a22a5', '25ce875efe9004c26f574cbcd18e59c8'),
@@ -322,6 +324,7 @@ INSERT INTO `User_Hashes` VALUES
 (20, '0fa05aa264bfd0b77840b16db18ab7ecfbd3fbd33ec37dae85576f5923acabe4', '641fd70c44a9397a30f0745b1fd8be82');
 
 INSERT INTO `Admins` VALUES
+(11, 'RAGDOLL001', 'alex.admin@ragdoll.local'),
 (12, 'RAGDOLL002', 'blake.admin@ragdoll.local'),
 (13, 'RAGDOLL003', 'casey.admin@ragdoll.local'),
 (14, 'RAGDOLL004', 'devon.admin@ragdoll.local'),
@@ -672,4 +675,3 @@ UNION ALL SELECT 'Contains_Response', COUNT(*) FROM `Contains_Response`
 UNION ALL SELECT 'Contains_Query', COUNT(*) FROM `Contains_Query`
 UNION ALL SELECT 'Manages', COUNT(*) FROM `Manages`
 UNION ALL SELECT 'Splits_Into', COUNT(*) FROM `Splits_Into`;
-
