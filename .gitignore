@@ -1,5 +1,5 @@
 /models
-
+/data
 # Local helper and environment files
 .scripts/
 .venv/
